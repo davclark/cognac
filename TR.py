@@ -18,10 +18,11 @@ VisionEgg.config.VISIONEGG_FULLSCREEN = 1
 
 class MultiStimHelper:
     """Meant to be embedded in MultiStim"""
-    stims = []
+    stims = None
 
     def __init__(self, stims):
-        self.stims = stims
+        # We need to do this because of our __setattr__
+        self.__dict__['stims'] = stims
 
     def __setattr__(self, name, value):
         for s in self.stims:
@@ -123,15 +124,11 @@ class TRStimController:
             self.blank_all_stims()
             try:
                 for stim_name, params in stim_info.items():
-                    print stim_name
                     stim = self.stim_dict[stim_name]
                     stim.parameters.on = True
-                    if stim_name == 'rightsimple':
-                        print stim.parameters.stims
-                        print stim.parameters.on
                     try:
                         for name, value in params.items():
-                            setattr(stim, name, value)
+                            setattr(stim.parameters, name, value)
                     except AttributeError:
                         # params was None or something else we don't deal with
                         pass
