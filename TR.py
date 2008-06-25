@@ -3,6 +3,10 @@ from VisionEgg.Core import get_default_screen, Viewport
 from VisionEgg.FlowControl import Presentation, FunctionController
 from VisionEgg.ResponseControl import KeyboardResponseController
 
+# I *really* think you need this:
+from VisionEgg.DaqKeyboard import KeyboardTriggerInController
+from pygame.locals import *
+
 import yaml
 
 #################################
@@ -47,9 +51,9 @@ class TRStimController:
     the TR length is exceeded.  Currently it sets one stimulus on, and all
     others off, though we may want to change that to turn a list of stimuli on
     eventually"""
-   # 3T laptop forp sends TTL pulses as "5"; buttons as "1","2","3","4"
-   # John used to do things this way:
-   # trigger_in_controller = KeyboardTriggerInController(pygame.locals.K_5)
+    # 3T laptop forp sends TTL pulses as "5"; buttons as "1","2","3","4"
+    # John used to do things this way:
+    # trigger_in_controller = KeyboardTriggerInController(pygame.locals.K_5)
     
     # Expected length of 1 TR
     TR = 2.0
@@ -84,6 +88,7 @@ class TRStimController:
         self.screen.parameters.bgcolor = (0.0,0.0,0.0,0.0)
 
         self.keyboard_controller = KeyboardResponseController()
+        self.firstTTL_trigger = KeyboardTriggerInController(K_5)
         
     def set_stims(self, stim_list, stim_dict, stim_seq_file): 
         self.stim_list = stim_list
@@ -94,13 +99,18 @@ class TRStimController:
                     size=self.screen.size,
                     stimuli=self.stim_list)
 
+        # Need to at least wait for the first trigger if this is going to work.
         go_duration = (self.TR * len(self.stim_seq), 'seconds')
         self.presentation = Presentation(go_duration=go_duration,
+                trigger_go_if_armed=0,
                 viewports=[viewport])
+
         self.presentation.add_controller(None, None, 
                 FunctionController(during_go_func=self.update) )
         self.presentation.add_controller(None, None, self.keyboard_controller)
-
+        # Adding this so that we can start the stimuli ahead of time
+        self.presentation.add_controller(self.presentation,'trigger_go_if_armed',
+                                    self.firstTTL_trigger)
 
     def run(self):
         self.presentation.go()
@@ -138,7 +148,7 @@ class TRStimController:
 
 
             # Don't even bother 'til we're close to the expected TR time
-            while self.t - self.trial_times[-1] < self.TR - self.eps:
+            while self.t - self.trial_times[-1] < self.TR - 2*self.eps:
                 yield
 
             while self.t - self.trial_times[-1] < self.TR + self.eps:
@@ -150,16 +160,24 @@ class TRStimController:
                         self.keyboard_controller.get_time_responses_since_go()
                     if len(keys) == len(times):
                         break
-                keys.reverse()
-                times.reverse()
 
                 i = None
                 try:
-                    i = keys.index('5')
+                    # Find the last value of '5' without inline reversal of keys/times
+                    # VisionEgg returns "responses" as a list of lists of chars, not just a list of chars...
+                    i = len(keys)-1-list(reversed(keys)).index(['5'])
+                except ValueError:
+                    pass
+                
+                # If anybody presses the escape key, quit entirely.
+                try:
+                    needToQuit = keys.index(['escape'])
+                    #self.presentation = None
+                    #exit()
                 except ValueError:
                     pass
 
-                if i and times[i] > self.trial_times:
+                if i and times[i] > self.trial_times[-1]:
                     break
                 else:
                     yield
@@ -167,7 +185,11 @@ class TRStimController:
             if self.t - self.trial_times[-1] >= self.TR + self.eps:
                 # We missed a TR (we think)
                 self.missed_trigs.append(self.t)
-                self.t = self.t - self.eps
+                # I see why you're doing this:
+                # self.t = self.t - self.eps
+                # ...but it seems like you're trying to do this:
+                self.t = self.trial_times[-1] + self.TR
+
 
     def get_responses(self, timeToSubtract=0, min_interval=2.0/60):
         """
@@ -178,6 +200,14 @@ class TRStimController:
         for every sample during that 100ms.  This is a bit much; I'd rather just save
         onsets and offsets for every key.  This function evaluates that.
         """
+
+        ''' 
+        If we're using the FORP, this isn't necessary, as events have no duration; 
+        they are represented as instantaneous keypresses.
+
+        -- John
+        '''
+
         response = self.keyboard_controller.get_responses_since_go()
         responseTime = self.keyboard_controller.get_time_responses_since_go()
 
