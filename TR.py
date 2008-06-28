@@ -5,7 +5,7 @@ from VisionEgg.ResponseControl import KeyboardResponseController
 
 # I *really* think you need this:
 from VisionEgg.DaqKeyboard import KeyboardTriggerInController
-from pygame.locals import *
+from pygame.locals import K_5
 
 import yaml
 
@@ -185,9 +185,6 @@ class TRStimController:
             if self.t - self.trial_times[-1] >= self.TR + self.eps:
                 # We missed a TR (we think)
                 self.missed_trigs.append(self.t)
-                # I see why you're doing this:
-                # self.t = self.t - self.eps
-                # ...but it seems like you're trying to do this:
                 self.t = self.trial_times[-1] + self.TR
 
 
