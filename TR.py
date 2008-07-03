@@ -1,3 +1,8 @@
+"""stim.TR is a library for running simple stimuli in the scanner.  It just
+returns all the buttons pressed - it doesn't do anything clever in terms of
+responding to subject input.  It is used by simpleComplex_OneGo.py, if you want
+to refer to an example of how to use this"""
+
 import VisionEgg
 from VisionEgg.Core import get_default_screen, Viewport
 from VisionEgg.FlowControl import Presentation, FunctionController
@@ -192,10 +197,11 @@ class TRStimController:
         """
         This function isn't especially elegant, but it's functional.
 
-        VisionEgg's keyboard libraries records a keypress and timestamp every time something
-        is down.  So if a key is held down for 100 ms, there will be an entry in the keylist
-        for every sample during that 100ms.  This is a bit much; I'd rather just save
-        onsets and offsets for every key.  This function evaluates that.
+        VisionEgg's keyboard libraries records a keypress and timestamp every
+        time something is down.  So if a key is held down for 100 ms, there will
+        be an entry in the keylist for every sample during that 100ms.  This is
+        a bit much; I'd rather just save onsets and offsets for every key.  This
+        function evaluates that.
         """
 
         ''' 

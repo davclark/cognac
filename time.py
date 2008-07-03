@@ -1,21 +1,61 @@
+"""time.py is a simple controller designed to show stimuli at specific times.  A
+reference for usage is in luminanceCompression2.py"""
+
+from SimpleVisionEgg import SimpleVisionEgg
+from pygame.locals import K_SPACE
+
+
 class StimulusController:
-    trial_info = TrialInfo()
-    trial_iter = None
+    # Stimulus related attributes
+    stim_list = None
+    stim_dict = None
+    trials = None
+    active_stims = None
+
+    # Attribs for keeping track of experiment
+    go_duration = ('forever', )
+    trial_times = None
     state = None
     t = 0
-    first_update = False
 
-    def __init__(self, trials):
-        self.trial_iter = trials.__iter__()
+
+    def __init__(self, stim_dict, trials):
+        self.trial_times = []
+        self.stim_dict = stim_dict
+        self.trials = trials
+        self.active_stims = []
+
         self.state = self.state_generator()
+
+    def compute_go_duration(self):
+        """This should run through the trials, find the latest stimulus and add
+        this info up, putting it in go_duration"""
+        pass
+
 
     def update(self, t):
         self.t = t
         self.state.next()
 
+    def deactivate_stims(self):
+        for s in self.active_stims:
+            if self.t - self.trial_times
+            s.parameters.on = False
+
     def state_generator(self):
-        while True:
-            while self.t - self.last < self.trial_info.length:
+        for trial in self.trials:
+            self.trial_times.append(self.t)
+
+            for stimulus in trial:
+                for name, parms in stimulus:
+                    while self.t - self.trial_times[-1] < parms['start']:
+                        self.deactivate_stims()
+                        yield
+
+                    self.active_stims.append(stim_dict[name])
+                    self.active_stims[-1].parameters.on = True
+
+            while len(self.active_stims) > 0:
                 yield
 
             # Start of Trial - White fixation
