@@ -22,6 +22,7 @@ VisionEgg.config.VISIONEGG_FULLSCREEN = 1
 ## Now for our code
 
 RESERVED_WORDS = 'start', 'stop', 'duration', 'log', 'response'
+
 class MultiStimHelper:
     """Meant to be embedded in MultiStim"""
     stims = None
