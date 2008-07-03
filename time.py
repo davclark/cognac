@@ -1,7 +1,7 @@
 """time.py is a simple controller designed to show stimuli at specific times.  A
 reference for usage is in luminanceCompression2.py"""
 
-from SimpleVisionEgg import SimpleVisionEgg
+from SimpleVisionEgg import SimpleVisionEgg, RESERVED_WORDS
 from pygame.locals import K_SPACE
 
 
@@ -37,125 +37,55 @@ class StimulusController:
         self.t = t
         self.state.next()
 
+    def activate_stims(self, new_stims):
+        for name, parms in new_stims:
+            parameters = self.stim_dict[name].parameters
+            parameters.on = True
+            for k, v in parms.items():
+                if k not in RESERVED_WORDS:
+                    setattr(parameters, k, v)
+
+        self.active_stims.extend(new_stims)
+        del new_stims[:]
+
     def deactivate_stims(self):
-        for s in self.active_stims:
-            if self.t - self.trial_times
-            s.parameters.on = False
+        to_del = []
+        for t in self.active_stims:
+            name, parms = t
+            try:
+                stop = parms['stop']
+            except KeyError:
+                stop = parms['start'] + parms['duration']
+
+            if self.t - self.trial_times[-1] > stop:
+                self.stim_dict[name].parameters.on = False
+                to_del.append(t)
+
+        for t in to_del:
+            self.active_stims.remove(t)
 
     def state_generator(self):
+        self.active_stims = [('text_disp', {'stop': 0})]
+        yield
+
+        new_stims = []
         for trial in self.trials:
             self.trial_times.append(self.t)
 
+            # Note that the order of activates, deactivates and yields is
+            # critical for instantaneous stimuli to appear properly (or at all)
             for stimulus in trial:
-                for name, parms in stimulus:
+                for name, parms in stimulus.items():
                     while self.t - self.trial_times[-1] < parms['start']:
                         self.deactivate_stims()
+                        self.activate_stims(new_stims)
                         yield
 
-                    self.active_stims.append(stim_dict[name])
-                    self.active_stims[-1].parameters.on = True
+                    new_stims.append((name, parms))
+
+            self.activate_stims(new_stims)
+            yield
 
             while len(self.active_stims) > 0:
+                self.deactivate_stims()
                 yield
-
-            # Start of Trial - White fixation
-            self.trial_info = self.trial_iter.next()
-            # left_circle.parameters.color = (1.0, 1.0, 1.0)
-            left_circle.parameters.on = True
-            self.last = self.t
-
-            # while self.t - self.last < self.trial_info.warning:
-            #     yield
-
-            # # Warning - change white to black
-            # left_circle.parameters.color = (0,0,0)
-
-            if self.trial_info.saccade < self.trial_info.first_bar:
-                while self.t - self.last < self.trial_info.saccade:
-                    yield
-
-                # Saccade
-                left_circle.parameters.on = False
-                right_circle.parameters.on = True
-
-                while self.t - self.last < self.trial_info.first_bar:
-                    yield
-
-                # First bar
-                top_bar.parameters.on = True
-                yield # We drop right back in here on the next frame
-                top_bar.parameters.on = False
-
-                while self.t - self.last < self.trial_info.second_bar:
-                    yield
-
-                # Second bar
-                bottom_bar.parameters.on = True
-                yield # We drop right back in here on the next frame
-                bottom_bar.parameters.on = False
-            else:
-                while self.t - self.last < self.trial_info.first_bar:
-                    yield
-
-                # First bar
-                top_bar.parameters.on = True
-                yield # We drop right back in here on the next frame
-                top_bar.parameters.on = False
-
-                while self.t - self.last < self.trial_info.second_bar:
-                    yield
-
-                # Second bar
-                bottom_bar.parameters.on = True
-                yield # We drop right back in here on the next frame
-                bottom_bar.parameters.on = False
-
-                while self.t - self.last < self.trial_info.saccade:
-                    yield
-
-                # Saccade
-                left_circle.parameters.on = False
-                right_circle.parameters.on = True
-
-
-            while self.t - self.last < self.trial_info.first_bar2:
-                yield
-
-            # First bar 2
-            top_bar.parameters.on = True
-            yield # We drop right back in here on the next frame
-            top_bar.parameters.on = False
- 
-            while self.t - self.last < self.trial_info.second_bar2:
-                yield
-
-            # Second bar 2
-            bottom_bar.parameters.on = True
-            yield # We drop right back in here on the next frame
-            bottom_bar.parameters.on = False
-
-            while self.t - self.last < self.trial_info.blank:
-                yield
-
-            # Blank 
-            right_circle.parameters.on = False
-
-            while keyboard_response.get_time_last_response_since_go() < \
-                self.last + self.trial_info.blank:
-                    yield
-
-            last_press = keyboard_response.get_time_last_response_since_go()
-            time_disp.parameters.text = \
-                    str(int(round((self.trial_info.second_bar2 - 
-                        self.trial_info.first_bar2) * 1000)))
-            time_disp.parameters.on = True
-
-            while keyboard_response.get_time_last_response_since_go() <= \
-                last_press + 0.5:
-                    yield
-
-            if keyboard_response.get_last_response_since_go() == 'q':
-                exit()
-
-            time_disp.parameters.on = False
-
