@@ -34,8 +34,19 @@ class StimulusController:
 
 
     def update(self, t):
+        # print "update called with t=%f" % t
         self.t = t
         self.state.next()
+
+
+    def pause(self):
+        """I currently can't figure out how to make this work... it doesn't
+        depend on whether the duration is 'forever' or not"""
+        print "pause called"
+        self.stim_dict['text_disp'].parameters.on = True
+        self.active_stims = [('text_disp', {'stop': 0})]
+        yield
+
 
     def activate_stims(self, new_stims):
         for name, parms in new_stims:
@@ -65,6 +76,7 @@ class StimulusController:
             self.active_stims.remove(t)
 
     def state_generator(self):
+        self.stim_dict['text_disp'].parameters.on = True
         self.active_stims = [('text_disp', {'stop': 0})]
         yield
 

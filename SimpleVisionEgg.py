@@ -56,7 +56,7 @@ class SimpleVisionEgg:
     def __init__(self):
         self.screen = get_default_screen()
 
-    def run(self, stimuli, update, pause= None, go_duration=('forever',), trigger=None):
+    def run(self, stimuli, update, pause=None, go_duration=('forever',), trigger=None):
         viewport = Viewport(screen=self.screen, size=self.screen.size, 
                            stimuli=stimuli)
 
@@ -64,10 +64,11 @@ class SimpleVisionEgg:
                 viewports=[viewport], trigger_go_if_armed=0)
         presentation.add_controller(None, None,
                      FunctionController(during_go_func=update, 
-                                        between_go_func=None) )
+                                        between_go_func=pause) )
 
         self.keyboard_controller = KeyboardResponseController()
         presentation.add_controller(None, None, self.keyboard_controller)
+
         if trigger:
             trigger_controller = KeyboardTriggerInController(trigger)
             presentation.add_controller(presentation, 'trigger_go_if_armed',
