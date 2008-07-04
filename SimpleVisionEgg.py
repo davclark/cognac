@@ -55,6 +55,7 @@ class SimpleVisionEgg:
 
     def __init__(self):
         self.screen = get_default_screen()
+        self.keyboard_controller = KeyboardResponseController()
 
     def run(self, stimuli, update, pause=None, go_duration=('forever',), trigger=None):
         viewport = Viewport(screen=self.screen, size=self.screen.size, 
@@ -66,7 +67,6 @@ class SimpleVisionEgg:
                      FunctionController(during_go_func=update, 
                                         between_go_func=pause) )
 
-        self.keyboard_controller = KeyboardResponseController()
         presentation.add_controller(None, None, self.keyboard_controller)
 
         if trigger:

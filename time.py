@@ -20,7 +20,7 @@ class StimulusController:
     log = None
     responses = None
     response_name = None
-    response_rel_time = 0
+    response_ref_time = 0
 
     # KeyboardController from VisionEgg
     keyboard_controller = None
@@ -76,28 +76,46 @@ class StimulusController:
                         if self.response_name:
                             self.log_response(reset=True)
                         self.response_name = resp_k
-                        self.response_rel_time = self.t
+                        self.expected_response = resp_v
+                        self.response_ref_time = self.t
 
 
         self.active_stims.extend(new_stims)
         del new_stims[:]
 
+
+    def record_response(self, response, rt):
+        """Helper function for log_responses"""
+        try:
+            response_dict = self.responses[self.response_name]
+            response_dict['expected'].append(self.expected_response)
+            response_dict['response'].append(response)
+            response_dict['ref_time'].append(self.response_ref_time)
+            response_dict['rt'].append(rt)
+        except KeyError:
+            response_dict = {}
+
+            response_dict['expected'] = [self.expected_response]
+            response_dict['response'] = [response] 
+            response_dict['ref_time'] = [self.response_ref_time]
+            response_dict['rt'] = [rt]
+
+            self.responses[self.response_name] = response_dict
+
+
     def log_response(self, reset=False):
-        """Should check response_name, response_rel_time and
-        keyboard_controller"""
         if self.response_name:
             last_press = \
-                    self.keyboard_response.get_time_last_response_since_go()
-            if last_press > self.response_rel_time:
-                try:
-                    self.responses[self.response_name]['response'].append(
-                        self.keyboard_response.get_last_response_since_go() )
-                except KeyError:
-                    self.responses[self.response_name] = \
-                        [self.keyboard_response.get_last_response_since_go()]
+                    self.keyboard_controller.get_time_last_response_since_go()
+            if last_press > self.response_ref_time:
+                self.record_response(
+                        self.keyboard_controller.get_last_response_since_go(),
+                        last_press - self.response_ref_time)
 
                 self.response_name = None
             elif reset:
+                self.record_response(None, None)
+                self.response_name = None
                 
         
     def deactivate_stims(self):
@@ -147,4 +165,4 @@ class StimulusController:
                 self.log_response()
                 yield
 
-            self.log_response(trial_end=True)
+            self.log_response(reset=True)
