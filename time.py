@@ -17,15 +17,23 @@ class StimulusController:
     trial_times = None
     state = None
     t = 0
+    log = None
+    response_name = None
+    response_rel_time = 0
+
+    # KeyboardController from VisionEgg
+    keyboard_controller = None
 
 
-    def __init__(self, stim_dict, trials):
+    def __init__(self, stim_dict, trials, keyboard_controller=None):
         self.trial_times = []
         self.stim_dict = stim_dict
         self.trials = trials
         self.active_stims = []
+        self.keyboard_controller=keyboard_controller
 
         self.state = self.state_generator()
+        self.log = {'trial_times': self.trial_times}
 
     def compute_go_duration(self):
         """This should run through the trials, find the latest stimulus and add
@@ -55,9 +63,28 @@ class StimulusController:
             for k, v in parms.items():
                 if k not in RESERVED_WORDS:
                     setattr(parameters, k, v)
+                elif k == 'log':
+                    for log_k, log_v in v.items():
+                        try:
+                            self.log[log_k].append(v)
+                        except KeyError:
+                            self.log[log_k] = [v]
+                elif k == 'response':
+                    for resp_k, resp_v in v.items():
+                        if self.response_name:
+                            # log failure to recieve this response
+                            pass
+                        self.response_name = resp_k
+                        self.response_rel_time = self.t
+
 
         self.active_stims.extend(new_stims)
         del new_stims[:]
+
+    def log_response(self):
+        """Should check response_name, response_rel_time and
+        keyboard_controller"""
+        pass
 
     def deactivate_stims(self):
         to_del = []
