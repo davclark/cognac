@@ -37,10 +37,10 @@ class StimulusController:
         self.log = {'trial_times': self.trial_times}
         self.responses = {}
 
-    def compute_go_duration(self):
+    def compute_go_duration(self, units='seconds'):
         """This should run through the trials, find the latest stimulus and add
         this info up, putting it in go_duration"""
-        self.go_duration = 0
+        go_duration = 0
         for trial in self.trials:
             max_time = 0
             for stim in trial:
@@ -52,10 +52,9 @@ class StimulusController:
                     if end_time > max_time:
                         max_time = end_time
 
-            self.go_duration += max_time
+            go_duration += max_time
 
-        print self.go_duration
-        
+        self.go_duration = (go_duration, units)
 
 
     def update(self, t):
