@@ -40,7 +40,22 @@ class StimulusController:
     def compute_go_duration(self):
         """This should run through the trials, find the latest stimulus and add
         this info up, putting it in go_duration"""
-        pass
+        self.go_duration = 0
+        for trial in self.trials:
+            max_time = 0
+            for stim in trial:
+                for name, parms in stim.items():
+                    try:
+                        end_time = parms['stop']
+                    except KeyError:
+                        end_time = parms['start'] + parms['duration']
+                    if end_time > max_time:
+                        max_time = end_time
+
+            self.go_duration += max_time
+
+        print self.go_duration
+        
 
 
     def update(self, t):
