@@ -82,9 +82,9 @@ class StimulusController:
                 elif k == 'log':
                     for log_k, log_v in v.items():
                         try:
-                            self.log[log_k].append(v)
+                            self.log[log_k].append(log_v)
                         except KeyError:
-                            self.log[log_k] = [v]
+                            self.log[log_k] = [log_v]
                 elif k == 'response':
                     for resp_k, resp_v in v.items():
                         if self.response_name:
