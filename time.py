@@ -18,6 +18,7 @@ class StimulusController:
     state = None
     t = 0
     log = None
+    responses = None
     response_name = None
     response_rel_time = 0
 
@@ -34,6 +35,7 @@ class StimulusController:
 
         self.state = self.state_generator()
         self.log = {'trial_times': self.trial_times}
+        self.responses = {}
 
     def compute_go_duration(self):
         """This should run through the trials, find the latest stimulus and add
@@ -72,8 +74,7 @@ class StimulusController:
                 elif k == 'response':
                     for resp_k, resp_v in v.items():
                         if self.response_name:
-                            # log failure to recieve this response
-                            pass
+                            self.log_response(reset=True)
                         self.response_name = resp_k
                         self.response_rel_time = self.t
 
@@ -81,11 +82,24 @@ class StimulusController:
         self.active_stims.extend(new_stims)
         del new_stims[:]
 
-    def log_response(self):
+    def log_response(self, reset=False):
         """Should check response_name, response_rel_time and
         keyboard_controller"""
-        pass
+        if self.response_name:
+            last_press = \
+                    self.keyboard_response.get_time_last_response_since_go()
+            if last_press > self.response_rel_time:
+                try:
+                    self.responses[self.response_name]['response'].append(
+                        self.keyboard_response.get_last_response_since_go() )
+                except KeyError:
+                    self.responses[self.response_name] = \
+                        [self.keyboard_response.get_last_response_since_go()]
 
+                self.response_name = None
+            elif reset:
+                
+        
     def deactivate_stims(self):
         to_del = []
         for t in self.active_stims:
@@ -117,14 +131,20 @@ class StimulusController:
                 for name, parms in stimulus.items():
                     while self.t - self.trial_times[-1] < parms['start']:
                         self.deactivate_stims()
+                        self.log_response()
                         self.activate_stims(new_stims)
                         yield
 
                     new_stims.append((name, parms))
 
+            self.deactivate_stims()
+            self.log_response()
             self.activate_stims(new_stims)
             yield
 
             while len(self.active_stims) > 0:
                 self.deactivate_stims()
+                self.log_response()
                 yield
+
+            self.log_response(trial_end=True)
