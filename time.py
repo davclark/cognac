@@ -1,5 +1,10 @@
 """time.py is a simple controller designed to show stimuli at specific times.  A
-reference for usage is in luminanceCompression2.py"""
+reference for usage is in luminanceCompression2.py
+
+The intended usage of this class is to present a sequence of fixed stimuli, and
+log the timings and keyboard responses to them.  Adaptive experiments should
+simply instantiate a new StimulusController for each trial, for example -
+adaptive logic would be out of place here."""
 
 from SimpleVisionEgg import SimpleVisionEgg, RESERVED_WORDS
 from pygame.locals import K_SPACE
@@ -21,21 +26,31 @@ class StimulusController:
     responses = None
     response_name = None
     response_ref_time = 0
+    trials_to_run = 0 # == run all of them
 
-    # KeyboardController from VisionEgg
+    # SimpleVisionEgg instance
+    vision_egg = None
     keyboard_controller = None
 
-
-    def __init__(self, stim_dict, trials, keyboard_controller=None):
+    def __init__(self, stim_dict, trials, vision_egg):
         self.trial_times = []
         self.stim_dict = stim_dict
         self.trials = trials
         self.active_stims = []
-        self.keyboard_controller=keyboard_controller
+        self.vision_egg = vision_egg
+        # Break out the oft-used keyboard controller
+        self.keyboard_controller = self.vision_egg.keyboard_controller
+
 
         self.state = self.state_generator()
+        self.vision_egg.set_functions(update=self.update, 
+                                      pause_update=self.pause_update)
         self.log = {'trial_times': self.trial_times}
         self.responses = {}
+
+    def run_trials(self, num):
+        self.trials_to_run = num
+        self.vision_egg.go()
 
     def compute_go_duration(self, units='seconds'):
         """This should run through the trials, find the latest stimulus and add
@@ -58,18 +73,18 @@ class StimulusController:
 
 
     def update(self, t):
-        # print "update called with t=%f" % t
+        """Wrapper to adapt the state generator into a regular function"""
+        print "update called", self.active_stims
         self.t = t
         self.state.next()
 
 
-    def pause(self):
+    def pause_update(self):
         """I currently can't figure out how to make this work... it doesn't
         depend on whether the duration is 'forever' or not"""
-        print "pause called"
+        print "pause called", self.active_stims
         self.stim_dict['text_disp'].parameters.on = True
         self.active_stims = [('text_disp', {'stop': 0})]
-        yield
 
 
     def activate_stims(self, new_stims):
@@ -134,28 +149,31 @@ class StimulusController:
         
     def deactivate_stims(self):
         to_del = []
-        for t in self.active_stims:
-            name, parms = t
+        for stim_tup in self.active_stims:
+            name, parms = stim_tup
             try:
                 stop = parms['stop']
             except KeyError:
                 stop = parms['start'] + parms['duration']
 
-            if self.t - self.trial_times[-1] > stop:
+            if self.t - self.trial_times[-1] >= stop:
                 self.stim_dict[name].parameters.on = False
-                to_del.append(t)
+                to_del.append(stim_tup)
 
-        for t in to_del:
-            self.active_stims.remove(t)
+        for stim_tup in to_del:
+            self.active_stims.remove(stim_tup)
 
     def state_generator(self):
-        self.stim_dict['text_disp'].parameters.on = True
-        self.active_stims = [('text_disp', {'stop': 0})]
+        # For some reason, update gets called immediately when it's registered
+        # as a function controller... so we add this yield to avoid any drawing
+        # for that frame
         yield
 
         new_stims = []
+        trial_num = 0
         for trial in self.trials:
             self.trial_times.append(self.t)
+            trial_num += 1
 
             # Note that the order of activates, deactivates and yields is
             # critical for instantaneous stimuli to appear properly (or at all)
@@ -174,9 +192,19 @@ class StimulusController:
             self.activate_stims(new_stims)
             yield
 
-            while len(self.active_stims) > 0:
+            while True:
                 self.deactivate_stims()
+                if len(self.active_stims) == 0:
+                    break
                 self.log_response()
                 yield
 
             self.log_response(reset=True)
+            
+            if trial_num == self.trials_to_run:
+                trial_num = 0
+                self.vision_egg.pause()
+                yield
+
+        self.vision_egg.pause()
+        yield

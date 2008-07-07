@@ -1,5 +1,6 @@
 """Simple script to set up and run vision egg in the way that we often need to
-do"""
+do.  This module serves simply to set things up and keep track of VisionEgg
+related values.  It shouldn't really _do_ anything."""
 
 import VisionEgg
 from VisionEgg.Core import get_default_screen, Viewport
@@ -54,27 +55,41 @@ class SimpleVisionEgg:
     presentation = None
 
     def __init__(self):
+        """We break up initialization a bit as we need to go back and forth with
+        some information.  In this case, we need screen size before specifying
+        the stimuli"""
         self.screen = get_default_screen()
-        self.keyboard_controller = KeyboardResponseController()
 
-    def run(self, stimuli, update, pause=None, go_duration=('forever',), trigger=None):
+    def set_stimuli(self, stimuli, trigger=None):
+        """Now that we have our stimuli, we initialize everything we can"""
         viewport = Viewport(screen=self.screen, size=self.screen.size, 
                            stimuli=stimuli)
 
-        presentation = Presentation(go_duration=go_duration,
-                viewports=[viewport], trigger_go_if_armed=0)
-        presentation.add_controller(None, None,
-                     FunctionController(during_go_func=update, 
-                                        between_go_func=pause) )
-
-        presentation.add_controller(None, None, self.keyboard_controller)
+        self.presentation = Presentation(viewports=[viewport], 
+                trigger_go_if_armed=0)
 
         if trigger:
             trigger_controller = KeyboardTriggerInController(trigger)
-            presentation.add_controller(presentation, 'trigger_go_if_armed',
-                                        trigger_controller)
+            self.presentation.add_controller(self.presentation, 
+                                    'trigger_go_if_armed', trigger_controller)
 
-        presentation.go()
+        self.keyboard_controller = KeyboardResponseController()
+        self.presentation.add_controller(None, None, self.keyboard_controller)
+
+
+    def set_functions(self, update=None, pause_update=None):
+        """Interface for StimulusController or similar"""
+        self.presentation.add_controller(None, None,
+                     FunctionController(during_go_func=update, 
+                                        between_go_func=pause_update) )
+
+
+    def go(self, go_duration=('forever',)):
+        self.presentation.parameters.go_duration = go_duration
+        self.presentation.go()
+
+    def pause(self):
+        self.presentation.parameters.go_duration = (0, 'frames')
 
     def get_responses(self, timeToSubtract=0, min_interval=2.0/60):
         """
