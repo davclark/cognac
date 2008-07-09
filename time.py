@@ -208,3 +208,32 @@ class StimulusController:
 
         self.vision_egg.pause()
         yield
+
+    def loglines(self, log=None, responses=None):
+        """Generator that returns the lines of a log file for output, easy to
+        consume with file.writelines (and so have a newline at the end)"""
+        if not log:
+            log = self.log
+        if not responses:
+            responses = self.responses
+
+        log_keys = log.keys()
+        resp_names = responses.keys()
+        resp_fields = ['expected', 'response', 'ref_time', 'rt']
+
+        resp_header = []
+        for name in resp_names:
+            resp_header.extend([name + '.' + f for f in resp_fields])
+
+        yield '\t'.join(log_keys + resp_header) + '\n'
+
+        values = []
+        for name in log_keys:
+            values.append(log[name])
+
+        for name in resp_names:
+            for field in resp_fields:
+                values.append(responses[name][field])
+
+        for line in zip(*values):
+            yield '\t'.join(str(item) for item in line) + '\n'
