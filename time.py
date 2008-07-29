@@ -74,7 +74,7 @@ class StimulusController:
 
     def update(self, t):
         """Wrapper to adapt the state generator into a regular function"""
-        print "update called", self.active_stims
+        # print "update called", self.active_stims
         self.t = t
         self.state.next()
 
@@ -82,7 +82,7 @@ class StimulusController:
     def pause_update(self):
         """I currently can't figure out how to make this work... it doesn't
         depend on whether the duration is 'forever' or not"""
-        print "pause called", self.active_stims
+        # print "pause called", self.active_stims
         self.stim_dict['text_disp'].parameters.on = True
         self.active_stims = [('text_disp', {'stop': 0})]
 
