@@ -65,13 +65,13 @@ class SimpleVisionEgg:
         viewport = Viewport(screen=self.screen, size=self.screen.size, 
                            stimuli=stimuli)
 
-        self.presentation = Presentation(viewports=[viewport], 
-                trigger_go_if_armed=0)
+        self.presentation = Presentation(viewports=[viewport])
 
         if trigger:
             trigger_controller = KeyboardTriggerInController(trigger)
             self.presentation.add_controller(self.presentation, 
                                     'trigger_go_if_armed', trigger_controller)
+            self.presentation.set(trigger_go_if_armed=0)
 
         self.keyboard_controller = KeyboardResponseController()
         self.presentation.add_controller(None, None, self.keyboard_controller)
