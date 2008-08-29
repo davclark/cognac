@@ -7,6 +7,7 @@ from VisionEgg.Core import get_default_screen, Viewport
 from VisionEgg.FlowControl import Presentation, FunctionController
 from VisionEgg.ResponseControl import KeyboardResponseController
 from VisionEgg.DaqKeyboard import KeyboardTriggerInController
+from VisionEgg.ParameterTypes import NoneType
 
 #################################
 # Set some VisionEgg Defaults:  #
@@ -81,7 +82,8 @@ class SimpleVisionEgg:
         """Interface for StimulusController or similar"""
         self.presentation.add_controller(None, None,
                      FunctionController(during_go_func=update, 
-                                        between_go_func=pause_update) )
+                                        between_go_func=pause_update,
+                                        return_type=NoneType) )
 
 
     def go(self, go_duration=('forever',)):

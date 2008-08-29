@@ -21,7 +21,6 @@ class StimulusController:
     go_duration = ('forever', )
     trial_times = None
     state = None
-    t = 0
     log = None
     responses = None
     response_name = None
@@ -43,6 +42,8 @@ class StimulusController:
 
 
         self.state = self.state_generator()
+        self.state.next()
+
         self.vision_egg.set_functions(update=self.update, 
                                       pause_update=self.pause_update)
         self.log = {'trial_times': self.trial_times}
@@ -75,8 +76,7 @@ class StimulusController:
     def update(self, t):
         """Wrapper to adapt the state generator into a regular function"""
         # print "update called", self.active_stims
-        self.t = t
-        self.state.next()
+        self.state.send(t)
 
 
     def pause_update(self):
@@ -87,7 +87,7 @@ class StimulusController:
         self.active_stims = [('text_disp', {'stop': 0})]
 
 
-    def activate_stims(self, new_stims):
+    def activate_stims(self, t, new_stims):
         for name, parms in new_stims:
             parameters = self.stim_dict[name].parameters
             parameters.on = True
@@ -106,7 +106,7 @@ class StimulusController:
                             self.log_response(reset=True)
                         self.response_name = resp_k
                         self.expected_response = resp_v
-                        self.response_ref_time = self.t
+                        self.response_ref_time = t
 
 
         self.active_stims.extend(new_stims)
@@ -147,7 +147,7 @@ class StimulusController:
                 self.response_name = None
                 
         
-    def deactivate_stims(self):
+    def deactivate_stims(self, t):
         to_del = []
         for stim_tup in self.active_stims:
             name, parms = stim_tup
@@ -156,7 +156,7 @@ class StimulusController:
             except KeyError:
                 stop = parms['start'] + parms['duration']
 
-            if self.t - self.trial_times[-1] >= stop:
+            if t - self.trial_times[-1] >= stop:
                 self.stim_dict[name].parameters.on = False
                 to_del.append(stim_tup)
 
@@ -164,47 +164,45 @@ class StimulusController:
             self.active_stims.remove(stim_tup)
 
     def state_generator(self):
-        # For some reason, update gets called immediately when it's registered
-        # as a function controller... so we add this yield to avoid any drawing
-        # for that frame
-        yield
+        # Initial yeild to get us into accepting "send" calls
+        t = yield
 
         new_stims = []
         trial_num = 0
         for trial in self.trials:
-            self.trial_times.append(self.t)
+            self.trial_times.append(t)
             trial_num += 1
 
             # Note that the order of activates, deactivates and yields is
             # critical for instantaneous stimuli to appear properly (or at all)
             for stimulus in trial:
                 for name, parms in stimulus.items():
-                    while self.t - self.trial_times[-1] < parms['start']:
-                        self.deactivate_stims()
+                    while t - self.trial_times[-1] < parms['start']:
+                        self.deactivate_stims(t)
                         self.log_response()
-                        self.activate_stims(new_stims)
-                        yield
+                        self.activate_stims(t, new_stims)
+                        t = yield
 
                     new_stims.append((name, parms))
 
-            self.deactivate_stims()
+            self.deactivate_stims(t)
             self.log_response()
-            self.activate_stims(new_stims)
+            self.activate_stims(t, new_stims)
             yield
 
             while True:
-                self.deactivate_stims()
+                self.deactivate_stims(t)
                 if len(self.active_stims) == 0:
                     break
                 self.log_response()
-                yield
+                t = yield
 
             self.log_response(reset=True)
             
             if trial_num == self.trials_to_run:
                 trial_num = 0
                 self.vision_egg.pause()
-                yield
+                t = yield
 
         self.vision_egg.pause()
         yield
