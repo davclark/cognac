@@ -14,6 +14,9 @@ from pygame.locals import K_5
 
 import yaml
 
+# local imports
+from SimpleVisionEgg import MultiStim
+
 #################################
 # Set some VisionEgg Defaults:  #
 #################################
@@ -24,30 +27,6 @@ VisionEgg.watch_exceptions()
 VisionEgg.config.VISIONEGG_SCREEN_W = 1024
 VisionEgg.config.VISIONEGG_SCREEN_H = 768
 VisionEgg.config.VISIONEGG_FULLSCREEN = 1
-
-class MultiStimHelper:
-    """Meant to be embedded in MultiStim"""
-    stims = None
-
-    def __init__(self, stims):
-        # We need to do this because of our __setattr__
-        self.__dict__['stims'] = stims
-
-    def __setattr__(self, name, value):
-        for s in self.stims:
-           setattr(s.parameters, name, value)
-
-    def __getattr__(self, name):
-        return [getattr(s.parameters, name) for s in self.stims]
-
-
-class MultiStim:
-    """Very simple surrogate class to get or set values of multiple classes at
-    once."""
-    parameters = None
-
-    def __init__(self, *stims):
-        self.parameters = MultiStimHelper(stims)
 
 
 class TRStimController:

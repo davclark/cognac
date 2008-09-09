@@ -16,9 +16,10 @@ from VisionEgg.ParameterTypes import NoneType
 VisionEgg.start_default_logging()
 VisionEgg.watch_exceptions()
 
-VisionEgg.config.VISIONEGG_SCREEN_W = 1024
-VisionEgg.config.VISIONEGG_SCREEN_H = 768
-VisionEgg.config.VISIONEGG_FULLSCREEN = 1
+# Could set constraints here if you don't want to muck with config files
+# VisionEgg.config.VISIONEGG_SCREEN_W = 1026
+# VisionEgg.config.VISIONEGG_SCREEN_H = 768
+# VisionEgg.config.VISIONEGG_FULLSCREEN = 1
 
 
 ## Now for our code
@@ -54,12 +55,18 @@ class SimpleVisionEgg:
     trigger_controller = None
     screen = None
     presentation = None
+    keys = None
+    presses = None
+    releases = None
 
     def __init__(self):
         """We break up initialization a bit as we need to go back and forth with
         some information.  In this case, we need screen size before specifying
         the stimuli"""
         self.screen = get_default_screen()
+        self.keys = []
+        self.presses = []
+        self.releases = []
 
     def set_stimuli(self, stimuli, trigger=None):
         """Now that we have our stimuli, we initialize everything we can"""
@@ -79,7 +86,7 @@ class SimpleVisionEgg:
 
 
     def set_functions(self, update=None, pause_update=None):
-        """Interface for StimulusController or similar"""
+        """Interface for stim.time.StimulusController or similar"""
         self.presentation.add_controller(None, None,
                      FunctionController(during_go_func=update, 
                                         between_go_func=pause_update,
@@ -92,6 +99,58 @@ class SimpleVisionEgg:
 
     def pause(self):
         self.presentation.parameters.go_duration = (0, 'frames')
+
+    def get_new_response(self, t, min_interval=2.0 / 60):
+        """(key, press) = get_new_response(self, t, min_interval=2.0 / 60)
+
+        Returns (None, None) if no new response is available.
+        Maintains three instance variables - keys, presses and releases, which
+        you can also access directly (but they won't be updated during loops
+        where you don't call this function)
+
+        This function makes a number of assumptions and is a little brittle
+        right now.  By not hard-coding the min_interval and maybe using key
+        presses and release events directly, we'd have a much better function.
+        But I don't really care right now.
+
+        DJC
+        """
+        press_time = self.keyboard_controller.get_time_last_response_since_go()
+        key = self.keyboard_controller.get_last_response_since_go()
+
+        # Our first response!
+        if len(self.keys) == 0:
+            if key:
+                self.keys.append(key)
+                self.presses.append(press_time)
+                self.releases.append(None)
+
+                return (key, press_time)
+            else:
+                return (None, None)
+
+                    
+        # We haven't seen a key press for a while
+        if t >= press_time + min_interval and not self.releases[-1]:
+            self.releases[-1] = t # Note - this will only be approximate!
+                                  # Ultimately, we could use pygame (or
+                                  # pyglet) directly
+            return (None, None)
+
+        # We've seen a release, or we see a new key
+        if (self.releases[-1] and press_time > self.releases[-1]) or \
+                key != self.keys[-1]:
+            if not self.releases[-1]:
+                self.releases[-1] = press_time
+            self.keys.append(key)
+            self.presses.append(press_time)
+            self.releases.append(None)
+
+            return (key, press_time)
+
+        return (None, None)
+
+
 
     def get_responses(self, timeToSubtract=0, min_interval=2.0/60):
         """
