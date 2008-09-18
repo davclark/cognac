@@ -1,4 +1,4 @@
-"""timer.py is a simple controller designed to show stimuli at specific times.  A
+"""time.py is a simple controller designed to show stimuli at specific times.  A
 reference for usage is in luminanceCompression2.py
 
 The intended usage of this class is to present a sequence of fixed stimuli, and
@@ -8,9 +8,6 @@ adaptive logic would be out of place here."""
 
 from SimpleVisionEgg import SimpleVisionEgg, RESERVED_WORDS
 from pygame.locals import K_SPACE
-from datetime import date
-# grr, file is named like a built-in module
-import time
 
 
 class StimulusController:
@@ -236,26 +233,3 @@ class StimulusController:
 
         for line in zip(*values):
             yield '\t'.join(str(item) for item in line) + '\n'
-
-
-    def getOutputFilename(self, subjectName, experimentname):# = 'expt'):
-        # function to avoid overwriting data
-        # writes a .datalog file that holds subject and testing date for each block
-        # This is altered slightly from john's simpleComplex_OneGo.py  -geoff
-
-        sub_date = subjectName+'\n'+str(date.fromtimestamp(time.time()))+'\n\n'
-        try:
-            datalog = open(experimentname + '.datalog','r')
-            dataloglines = datalog.readlines()
-            datalog.close()
-        except:
-            dataloglines = []
-
-        outputFileName = subjectName + '_' + \
-                str(1 + dataloglines.count(subjectName+'\n')) + '.txt'
-        datalog = open(experimentname + '.datalog', 'a')
-        datalog.write(sub_date)
-        datalog.close()
-
-        return outputFileName
-
