@@ -1,5 +1,5 @@
-"""StimController.py is a simple controller designed to show stimuli at specific times.  A
-reference for usage is in luminanceCompression2.py
+"""StimController.py is a simple controller designed to show stimuli at specific
+times.  A reference for usage is in luminanceCompression2.py
 
 The intended usage of this class is to present a sequence of fixed stimuli, and
 log the timings and keyboard responses to them.  Adaptive experiments should
