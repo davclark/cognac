@@ -12,7 +12,7 @@ from datetime import date
 import time
 
 
-class StimulusController:
+class StimController:
     # Stimulus related attributes
     stim_list = None
     stim_dict = None
@@ -163,6 +163,11 @@ class StimulusController:
         for stim_tup in to_del:
             self.active_stims.remove(stim_tup)
 
+
+    def waiting(self, t, parms):
+        """This could perhaps be overloaded for more flexible control of flow"""
+        return t - self.ref_time < parms['start']
+
     def state_generator(self):
         # Initial yeild to get us into accepting "send" calls
         t = yield
@@ -171,13 +176,23 @@ class StimulusController:
         trial_num = 0
         for trial in self.trials:
             self.trial_times.append(t)
+            # This can be updated over the course of the trial - e.g. if there
+            # is a self-timed response
+            self.ref_time = t
             trial_num += 1
 
             # Note that the order of activates, deactivates and yields is
             # critical for instantaneous stimuli to appear properly (or at all)
             for stimulus in trial:
+                # This is currently always a singleton dictionary - no actual
+                # iteration occurs in this "loop"!  It's just syntactically
+                # nicer than the alternative
                 for name, parms in stimulus.items():
-                    while t - self.trial_times[-1] < parms['start']:
+                    while self.waiting(t, parms):
+                        # Somehow need to accomodate notion of "behavior" which
+                        # takes an unspecified (or bounded) amount of time
+                        # Why not just return control and have the caller do
+                        # this?
                         self.deactivate_stims(t)
                         self.log_response()
                         self.activate_stims(t, new_stims)
@@ -185,16 +200,12 @@ class StimulusController:
 
                     new_stims.append((name, parms))
 
-            self.deactivate_stims(t)
-            self.log_response()
-            self.activate_stims(t, new_stims)
-            yield
-
             while True:
                 self.deactivate_stims(t)
+                self.log_response()
+                self.activate_stims(t, new_stims)
                 if len(self.active_stims) == 0:
                     break
-                self.log_response()
                 t = yield
 
             self.log_response(reset=True)
