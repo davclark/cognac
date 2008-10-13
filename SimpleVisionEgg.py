@@ -23,9 +23,6 @@ VisionEgg.watch_exceptions()
 
 
 ## Now for our code
-
-RESERVED_WORDS = 'start', 'stop', 'duration', 'log', 'response'
-
 class MultiStimHelper:
     """Meant to be embedded in MultiStim"""
     stims = None
@@ -149,8 +146,6 @@ class SimpleVisionEgg:
             return (key, press_time)
 
         return (None, None)
-
-
 
     def get_responses(self, timeToSubtract=0, min_interval=2.0/60):
         """
