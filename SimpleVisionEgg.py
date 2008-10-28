@@ -97,7 +97,7 @@ class SimpleVisionEgg:
     def pause(self):
         self.presentation.parameters.go_duration = (0, 'frames')
 
-    def get_new_response(self, t, min_interval=2.0 / 60):
+    def get_new_response(self, t, min_interval=2.0 / 60, releases=False):
         """(key, press) = get_new_response(self, t, min_interval=2.0 / 60)
 
         Returns (None, None) if no new response is available.
@@ -122,17 +122,24 @@ class SimpleVisionEgg:
                 self.presses.append(press_time)
                 self.releases.append(None)
 
-                return (key, press_time)
+                if releases:
+                    return (key, None)
+                else:
+                    return (key, press_time)
+
             else:
                 return (None, None)
 
                     
-        # We haven't seen a key press for a while
+        # We haven't seen a key press for min_interval
         if t >= press_time + min_interval and not self.releases[-1]:
             self.releases[-1] = t # Note - this will only be approximate!
                                   # Ultimately, we could use pygame (or
                                   # pyglet) directly
-            return (None, None)
+            if releases:
+                return (self.keys[-1], t)
+            else:
+                return (None, None)
 
         # We've seen a release, or we see a new key
         if (self.releases[-1] and press_time > self.releases[-1]) or \
@@ -143,7 +150,10 @@ class SimpleVisionEgg:
             self.presses.append(press_time)
             self.releases.append(None)
 
-            return (key, press_time)
+            if releases:
+                return (key, None)
+            else:
+                return (key, press_time)
 
         return (None, None)
 
