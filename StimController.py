@@ -15,7 +15,8 @@ from copy import copy
 from csv import DictWriter
 
 from SimpleVisionEgg import SimpleVisionEgg
-from pygame.locals import K_SPACE
+import pygame
+
 
 class RelTime:
     units = 'seconds'
@@ -53,16 +54,20 @@ class Response:
     ref_time = None
     response = None
     rt = None
+    response_type = pygame.KEYDOWN
 
-    @staticmethod
-    def get_response(t):
-        '''This should be overridden with a function with the following
-        signature: (resp, timestamp) = fcn(t) 
-        This can be done more nicely by inheritence, or more aggressively by
-        Response.get_response = staticmethod(fcn)
-        Note that if you override record_response such that it doesn't call this
-        function, you don't need to worry about it anymore!'''
-        raise NotImplementedError('Response needs a get_response fcn!')
+    unlogged = ('limit', 'label', 'response_type')
+
+    # We just use pygame directly now
+    # @staticmethod
+    # def get_response(t):
+    #     '''This should be overridden with a function with the following
+    #     signature: (resp, timestamp) = fcn(t) 
+    #     This can be done more nicely by inheritence, or more aggressively by
+    #     Response.get_response = staticmethod(fcn)
+    #     Note that if you override record_response such that it doesn't call this
+    #     function, you don't need to worry about it anymore!'''
+    #     raise NotImplementedError('Response needs a get_response fcn!')
 
     def __init__(self, label, expected=None, limit=None):
         '''We're careful here so that our __dict__ will have only entries we've
@@ -76,15 +81,17 @@ class Response:
     def record_response(self, t):
         '''This could be overridden to do extended feedback, like data entry
         or updating feedback during response collection'''
-        (response, timestamp) = self.get_response(t)
-        # Note - None > any number is always False
-        if timestamp > self.ref_time and \
-                (not self.limit or response in self.limit):
-            self.response = response
-            self.rt = timestamp - self.ref_time
-            return True
-        else:
-            return False
+        responses = pygame.event.get(self.response_type)
+        pygame.event.clear()
+        if responses:
+            # If you want something more sophisticated - write a subclass!
+            first_response = pygame.key.name(responses[0].key)
+            if not self.limit or first_response in self.limit:
+                self.response = first_response
+                self.rt = t - self.ref_time
+                return True
+
+        return False
 
     def response_time(self):
         '''This is trivial, but might not be with other response types'''
@@ -209,6 +216,10 @@ class Trial:
                     for log_k, log_v in event.log.items():
                         self.log[log_k] = log_v
                 if event.response:
+                    # Make sure we only get inputs after the start of the
+                    # response period
+                    pygame.event.clear()
+
                     event.response.ref_time = t
                     self.log[event.response.label] = event.response
                     self.curr_response = event.response
@@ -329,7 +340,7 @@ class StimController:
                     # For greater generality, this could be a method of
                     # Response...
                     for param, param_value in obj.__dict__.items():
-                        if param is not 'label':
+                        if param not in obj.unlogged:
                             comp_key = '.'.join((label, param))
                             retval[comp_key] = param_value
                 except AttributeError:

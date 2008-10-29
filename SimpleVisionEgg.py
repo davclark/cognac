@@ -65,12 +65,13 @@ class SimpleVisionEgg:
         self.presses = []
         self.releases = []
 
-    def set_stimuli(self, stimuli, trigger=None):
+    def set_stimuli(self, stimuli, trigger=None, kb_controller=False):
         """Now that we have our stimuli, we initialize everything we can"""
         viewport = Viewport(screen=self.screen, size=self.screen.size, 
                            stimuli=stimuli)
 
-        self.presentation = Presentation(viewports=[viewport])
+        self.presentation = Presentation(viewports=[viewport],
+                check_events=False)
 
         if trigger:
             trigger_controller = KeyboardTriggerInController(trigger)
@@ -78,8 +79,9 @@ class SimpleVisionEgg:
                                     'trigger_go_if_armed', trigger_controller)
             self.presentation.set(trigger_go_if_armed=0)
 
-        self.keyboard_controller = KeyboardResponseController()
-        self.presentation.add_controller(None, None, self.keyboard_controller)
+        if kb_controller:
+            self.keyboard_controller = KeyboardResponseController()
+            self.presentation.add_controller(None, None, self.keyboard_controller)
 
 
     def set_functions(self, update=None, pause_update=None):
@@ -100,6 +102,11 @@ class SimpleVisionEgg:
     def get_new_response(self, t, min_interval=2.0 / 60, releases=False):
         """(key, press) = get_new_response(self, t, min_interval=2.0 / 60)
 
+        DEPRECATED!
+
+        Use this function to get responses from the keyboard controller in real
+        time.
+
         Returns (None, None) if no new response is available.
         Maintains three instance variables - keys, presses and releases, which
         you can also access directly (but they won't be updated during loops
@@ -112,6 +119,11 @@ class SimpleVisionEgg:
 
         DJC
         """
+        raise DeprecationWarning("please use pygame directly, as in" +
+                                 "StimController.Response")
+        # Note - this is deprecated anyway, but it'd probably make more sense to
+        # use the keyboard_controller.get_responses() to simply get the keys
+        # that are down _right_now_
         press_time = self.keyboard_controller.get_time_last_response_since_go()
         key = self.keyboard_controller.get_last_response_since_go()
 
@@ -133,9 +145,8 @@ class SimpleVisionEgg:
                     
         # We haven't seen a key press for min_interval
         if t >= press_time + min_interval and not self.releases[-1]:
-            self.releases[-1] = t # Note - this will only be approximate!
-                                  # Ultimately, we could use pygame (or
-                                  # pyglet) directly
+            # This is only approximate!
+            self.releases[-1] = t 
             if releases:
                 return (self.keys[-1], t)
             else:
@@ -159,7 +170,7 @@ class SimpleVisionEgg:
 
     def get_responses(self, timeToSubtract=0, min_interval=2.0/60):
         """
-        This function isn't especially elegant, but it's functional.
+        Use this function to post-process the results of a KeyboardController
 
         VisionEgg's keyboard libraries records a keypress and timestamp every
         time something is down.  So if a key is held down for 100 ms, there will
