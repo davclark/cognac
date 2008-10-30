@@ -85,7 +85,7 @@ class SimpleVisionEgg:
 
 
     def set_functions(self, update=None, pause_update=None):
-        """Interface for stim.time.StimulusController or similar"""
+        """Interface for cognac.StimulusController or similar"""
         self.presentation.add_controller(None, None,
                      FunctionController(during_go_func=update, 
                                         between_go_func=pause_update,

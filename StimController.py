@@ -371,7 +371,7 @@ class StimController:
         dw.writer.writerow(header)
         dw.writerows(log)
 
-    def getOutputFilename(self, subjectName, experimentname):# = 'expt'):
+    def getOutputFilename(self, subjectName, experimentname):
         # function to avoid overwriting data
         # writes a .datalog file that holds subject and testing date for each block
         # This is altered slightly from john's simpleComplex_OneGo.py  -geoff
@@ -386,7 +386,7 @@ class StimController:
             dataloglines = []
 
         outputFileName = ''.join((subjectName, '_',
-                str(1 + dataloglines.count(subjectName+'\n')), '.txt'))
+                str(1 + dataloglines.count(subjectName+'\n')), '.csv'))
         datalog = open(experimentname + '.datalog', 'a')
         datalog.write(sub_date)
         datalog.close()
