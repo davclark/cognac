@@ -257,6 +257,10 @@ class StimController:
 
 
     def __init__(self, trials, vision_egg, pause_event=None):
+        """vision_egg is an instance of SimpleVisionEgg
+        pause_event is an Event which will be shown at the beginning of
+        every stim_controller.run_trials loop."""
+            
         self.trials = trials
         self.vision_egg = vision_egg
         self.pause_event = pause_event
