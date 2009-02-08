@@ -257,10 +257,6 @@ class StimController:
 
 
     def __init__(self, trials, vision_egg, pause_event=None):
-        """vision_egg is an instance of SimpleVisionEgg
-        pause_event is an Event which will be shown at the beginning of
-        every stim_controller.run_trials loop."""
-            
         self.trials = trials
         self.vision_egg = vision_egg
         self.pause_event = pause_event
@@ -380,7 +376,8 @@ class StimController:
         # writes a .datalog file that holds subject and testing date for each block
         # This is altered slightly from john's simpleComplex_OneGo.py  -geoff
 
-        sub_date = '%s: %s\n'%(subjectName,str(date.fromtimestamp(time.time())))
+        sub_date = '\n'.join((subjectName, str(date.fromtimestamp(time.time())),
+                              '\n'))
         try:
             datalog = open(experimentname + '.datalog','r')
             dataloglines = datalog.readlines()
@@ -388,8 +385,8 @@ class StimController:
         except:
             dataloglines = []
 
-        outputFileName = '%s_%d.csv' % \
-                (subjectName, 1 + ''.join(dataloglines).count(subjectName))
+        outputFileName = ''.join((subjectName, '_',
+                str(1 + dataloglines.count(subjectName+'\n')), '.csv'))
         datalog = open(experimentname + '.datalog', 'a')
         datalog.write(sub_date)
         datalog.close()

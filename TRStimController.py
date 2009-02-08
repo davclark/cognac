@@ -137,7 +137,8 @@ class TRStimController:
 
             while self.t - self.trial_times[-1] < self.TR + self.eps:
                 # Handle the rare case when a key might register between
-                # function calls
+                # function calls - THIS WOULD NEVER HAPPEN WITH VisionEgg as
+                # written!
                 while True:
                     keys = self.keyboard_controller.get_responses_since_go()
                     times = \

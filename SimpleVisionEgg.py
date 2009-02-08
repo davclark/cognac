@@ -47,6 +47,10 @@ class MultiStim:
     def __init__(self, *stims):
         self.parameters = MultiStimHelper(stims)
 
+    def set(self, **parms):
+        for k, v in parms.items():
+            setattr(self.parameters, k, v)
+
 class SimpleVisionEgg:
     keyboard_controller = None
     trigger_controller = None
@@ -70,6 +74,8 @@ class SimpleVisionEgg:
         viewport = Viewport(screen=self.screen, size=self.screen.size, 
                            stimuli=stimuli)
 
+        # We disable "check_events" so that we don't lose "instantaneous" key
+        # presses and can check these in our Response classes
         self.presentation = Presentation(viewports=[viewport],
                 check_events=False)
 
