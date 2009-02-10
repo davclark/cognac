@@ -55,6 +55,8 @@ class Response:
     response = None
     rt = None
     response_type = pygame.KEYDOWN
+    buttonbox = None
+    timelimit = None
 
     unlogged = ('limit', 'label', 'response_type')
 
@@ -69,29 +71,48 @@ class Response:
     #     function, you don't need to worry about it anymore!'''
     #     raise NotImplementedError('Response needs a get_response fcn!')
 
-    def __init__(self, label, expected=None, limit=None):
+    def __init__(self, label, expected=None, limit=None, buttonbox=None, timelimit=None):
         '''We're careful here so that our __dict__ will have only entries we've
-        actually updated'''
+        actually updated
+        buttonbox is an instance of parallel.respbox.Respbox()
+        timelimit is the trial length, and stops the buttonbox loop. only needed 
+        if buttonboxes are used.'''
         self.label = label
         if expected is not None:
             self.expected = expected
         if limit is not None:
             self.limit = limit
+        if buttonbox is not None:
+            self.buttonbox = buttonbox
+            self.limit = [0,2,4,8,16]
+        if timelimit is not None:
+            self.timelimit = timelimit
 
     def record_response(self, t):
         '''This could be overridden to do extended feedback, like data entry
         or updating feedback during response collection'''
-        responses = pygame.event.get(self.response_type)
-        pygame.event.clear()
-        if responses:
-            # If you want something more sophisticated - write a subclass!
-            first_response = pygame.key.name(responses[0].key)
-            if not self.limit or first_response in self.limit:
-                self.response = first_response
-                self.rt = t - self.ref_time
+        if self.buttonbox and self.timelimit:
+            response = 0
+            while response == 0 and t <= self.ref_time + self.timelimit:
+                response = self.buttonbox.readBox()
+            self.rt = t - self.ref_time
+            # did i get the logic of this right?
+            if response:
                 return True
+            return False
 
-        return False
+        else:
+            responses = pygame.event.get(self.response_type)
+            pygame.event.clear()
+            if responses:
+                # If you want something more sophisticated - write a subclass!
+                first_response = pygame.key.name(responses[0].key)
+                if not self.limit or first_response in self.limit:
+                    self.response = first_response
+                    self.rt = t - self.ref_time
+                    return True
+
+            return False
 
     def response_time(self):
         '''This is trivial, but might not be with other response types'''
