@@ -58,7 +58,7 @@ class Response:
     buttonbox = None
     timelimit = None
 
-    unlogged = ('limit', 'label', 'response_type')
+    unlogged = ('limit', 'label', 'response_type', 'buttonbox')
 
     # We just use pygame directly now
     # @staticmethod
@@ -71,7 +71,7 @@ class Response:
     #     function, you don't need to worry about it anymore!'''
     #     raise NotImplementedError('Response needs a get_response fcn!')
 
-    def __init__(self, label, expected=None, limit=None, buttonbox=None, timelimit=None):
+    def __init__(self, label, expected=None, limit=None, buttonbox=None):
         '''We're careful here so that our __dict__ will have only entries we've
         actually updated
         buttonbox is an instance of parallel.respbox.Respbox()
@@ -84,21 +84,17 @@ class Response:
             self.limit = limit
         if buttonbox is not None:
             self.buttonbox = buttonbox
-            self.limit = [0,2,4,8,16]
-        if timelimit is not None:
-            self.timelimit = timelimit
 
     def record_response(self, t):
         '''This could be overridden to do extended feedback, like data entry
         or updating feedback during response collection'''
-        if self.buttonbox and self.timelimit:
-            response = 0
-            while response == 0 and t <= self.ref_time + self.timelimit:
-                response = self.buttonbox.readBox()
-            self.rt = t - self.ref_time
-            # did i get the logic of this right?
-            if response:
+        if self.buttonbox:
+            resp = self.buttonbox.readBox()
+            if resp>0:
+                self.response = resp
+                self.rt = t - self.ref_time
                 return True
+                
             return False
 
         else:
