@@ -20,9 +20,11 @@ from VisionEgg.Text import Text
 class FaceStim(Text):
     """Stimulus object -- accepts string of a dumb emoticon"""
     def __init__(self,face):
-       self.face=face 
-
-       Text.__init__(self, text=face, font_size=50, color=(1,0,0),**std_params)
+        self.face=face 
+        
+        Text.__init__(self, text=face, font_size=50,
+             color=[random.random() for i in (1,2,3)],
+             **std_params)
 
 class ExpTrial(Trial):
     """Here's a trial for this experiment, which you give a FaceStim instance"""
