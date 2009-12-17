@@ -173,11 +173,13 @@ class Event:
         self.response = response
         
     def activate(self):
-        self.target.set(**self.parms)
+        if self.target is not None:
+            self.target.set(**self.parms)
         return self
 
     def deactivate(self):
-        self.target.set(on=False)
+        if self.target is not None:
+            self.target.set(on=False)
         return self
 
 
