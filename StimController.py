@@ -60,17 +60,6 @@ class Response:
 
     unlogged = ('limit', 'label', 'response_type', 'buttonbox')
 
-    # We just use pygame directly now
-    # @staticmethod
-    # def get_response(t):
-    #     '''This should be overridden with a function with the following
-    #     signature: (resp, timestamp) = fcn(t) 
-    #     This can be done more nicely by inheritence, or more aggressively by
-    #     Response.get_response = staticmethod(fcn)
-    #     Note that if you override record_response such that it doesn't call this
-    #     function, you don't need to worry about it anymore!'''
-    #     raise NotImplementedError('Response needs a get_response fcn!')
-
     def __init__(self, label, expected=None, limit=None, buttonbox=None):
         '''We're careful here so that our __dict__ will have only entries we've
         actually updated
@@ -120,7 +109,7 @@ class Response:
 
 class Event:
     '''A thin wrapper around VisionEgg stimuli.  Most of the code is now for
-    backwards compatibility with '''
+    backwards compatibility'''
 
     # Usually a VisionEgg stimulus
     target = None
