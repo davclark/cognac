@@ -48,16 +48,33 @@ class RelTime:
 
 
 class Response:
+	'''A generic response class that maintains information about key-presses. 
+	
+	Can be overridden to handle more complex hardware.'''
+	## These are things you can set to affect the Response behavior
+
+	# The name of the response for relative timing
     label = None
+	# The "correct" keypress
     expected = None
+	# Acceptable keypresses (the full set, a list), all other keys are ignored
     limit = None
+	# You might change this to, e.g., pygame.KEYUP
+    response_type = pygame.KEYDOWN
+
+	## These should be set by the Response instance itself!
+
+	# time from start of Trial when response was registered
     ref_time = None
     response = None
     rt = None
-    response_type = pygame.KEYDOWN
+
+	## Not sure if these should be in the base class!
     buttonbox = None
     timelimit = None
 
+	# You could potentially change this, but that would be an "advanced"
+	# maneuver
     unlogged = ('limit', 'label', 'response_type', 'buttonbox')
 
     def __init__(self, label, expected=None, limit=None, buttonbox=None):
