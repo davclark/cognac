@@ -18,22 +18,16 @@ import random
 from VisionEgg.Text import Text
 from VisionEgg.MoreStimuli import FilledCircle
 
+positions = [100, 250, 500, 750, 900]
+
 class TargetStim(FilledCircle):
     """A circle that goes on different places on the x axis"""
-    def __init__(self, x):
-        self.x=x 
+    def __init__(self, pos):
+        self.pos=pos
         
-        FilledCircle.__init__(self, position=(x,240),
-             color=[random.random() for i in (1,2,3)], on=False)
-
-class FaceStim(Text):
-    """Stimulus object -- accepts string of a dumb emoticon"""
-    def __init__(self,face):
-        self.face=face 
-        
-        Text.__init__(self, text=face, font_size=50,
-             color=[random.random() for i in (1,2,3)],
-             **std_params)
+        FilledCircle.__init__(self, radius=10.0,
+                              position=(positions[self.pos],240),
+                              on=False)
 
 class ExpTrial(Trial):
     """Here's a trial for this experiment, which you give a 
@@ -41,8 +35,8 @@ class ExpTrial(Trial):
     def __init__(self, TS):
         events=[Event(fixation, start=0, duration=2.0),
                 Event(TS, start=2, duration=.5,
-                    log={'x_position':TS.x,
-                        'subject':subject}),
+                    log={'pos': TS.pos,
+                         'x_position': positions[TS.pos]}),
                 Event(blank, start=2, duration=2.5,
                     response = Response(label='press',limit=('z','/')))]
 
@@ -60,12 +54,6 @@ response - a Response instance
                         this gives back the integer 2^x, x indexes the finger
                         dont give it a limit if you do this
 """
-
-# Here's an easy way to imput the subject designation and other starting info
-subject = raw_input('Subject designation: ')
-exp_version = None
-while exp_version not in (1, 2):
-    exp_version = input("Experiment Version (1 or 2): ")
 
 ##############
 # Initialize #
@@ -88,7 +76,7 @@ fixation = Text(text="+", font_size=55, **std_params)
 blank = Text(text="", **std_params)
 
 
-trial_stims = [TargetStim(x) for x in (100, 200, 300)]
+trial_stims = [TargetStim(x) for x in (0, 1, 2, 3, 4)]
 trials = [ExpTrial(s) for s in trial_stims]
 random.shuffle(trials)
 # A list of trials, using a super-pythonic list comprehension
@@ -101,6 +89,5 @@ stim_control = StimController(trials, vision_egg, pause_event=Event(rest,0,0))
 # pause_event begins each block after a SPACE press.
 # 'rest' is the name of my text stim
 
-stim_control.run_trials(len(trials))
-stim_control.writelog(stim_control.getOutputFilename(subject,'EXPERIMENT_TEMPLATE'))
-# Change the experiment name and give it the subject at the beginning
+stim_control.run_trials()
+stim_control.writelog('example.log')

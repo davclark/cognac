@@ -9,6 +9,8 @@ adaptive logic would be out of place here.
 Now that things have been made a little more general, you could do adaptive
 stuff... but its not obvious."""
 
+
+
 from datetime import date
 import time
 from copy import copy
@@ -48,33 +50,39 @@ class RelTime:
 
 
 class Response:
-	'''A generic response class that maintains information about key-presses. 
-	
-	Can be overridden to handle more complex hardware.'''
-	## These are things you can set to affect the Response behavior
+    '''A generic response class that maintains information about key-presses. 
+    
+    Can be overridden to handle more complex hardware.
+    which take args: 
+        label (how the response is named in the csv)
+        limit -- if you give it key values (e.g. ("l","m") accepts only those)
+        buttonbox -- a parallel.respbox.RespBox instance
+            this gives back the integer 2^x, x indexes the finger
+            dont give it a limit if you do this'''
+    ## These are things you can set to affect the Response behavior
 
-	# The name of the response for relative timing
+    # The name of the response for relative timing
     label = None
-	# The "correct" keypress
+    # The "correct" keypress
     expected = None
-	# Acceptable keypresses (the full set, a list), all other keys are ignored
+    # Acceptable keypresses (the full set, a list), all other keys are ignored
     limit = None
-	# You might change this to, e.g., pygame.KEYUP
+    # You might change this to, e.g., pygame.KEYUP
     response_type = pygame.KEYDOWN
 
-	## These should be set by the Response instance itself!
+    ## These should be set by the Response instance itself!
 
-	# time from start of Trial when response was registered
+    # time from start of Trial when response was registered
     ref_time = None
     response = None
     rt = None
 
-	## Not sure if these should be in the base class!
+    ## Not sure if these should be in the base class!
     buttonbox = None
     timelimit = None
 
-	# You could potentially change this, but that would be an "advanced"
-	# maneuver
+    # You could potentially change this, but that would be an "advanced"
+    # maneuver
     unlogged = ('limit', 'label', 'response_type', 'buttonbox')
 
     def __init__(self, label, expected=None, limit=None, buttonbox=None):
@@ -125,6 +133,13 @@ class Response:
 
 
 class Event:
+    """
+    Events take:
+    first, the stim used, a VisionEgg.Stimulus class instance
+    start, duration, stop -- times in seconds since beginning of Trial
+    log -- a dict
+    response - a Response instance
+    """
     '''A thin wrapper around VisionEgg stimuli.  Most of the code is now for
     backwards compatibility'''
 
