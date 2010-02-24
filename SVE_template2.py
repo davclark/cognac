@@ -38,8 +38,16 @@ xlim, ylim = vision_egg.screen.size # screen size in pixels
 center = (xlim/2,ylim/2) 
 rest = Text(text="Press space to begin.", position=center, anchor='center',
             on=False)
-fixation = Text(text="+", font_size=55, position=center, anchor='center', 
+def fixation1():
+    Text(text=random.choice("GGGGGGGGNN"), font_size=55, position=center, anchor='center', on=False);
+fixation2 = Text(text=random.choice("GGGGGGGGNN"), font_size=55, position=center, anchor='center', 
                 on=False)
+				
+cues = ['G','G','G','G','G','G','G','G','N','N']
+fixation = [Text(text=cue, font_size=55, position=center, anchor='center', 
+                on=False)
+				for cue in cues]
+
 
 # Note, prior to python3, need a float to avoid integer division
 x_positions = [xlim * frac / 6.0 for frac in range(1, 5)]
@@ -68,7 +76,7 @@ response - a Response instance
             dont give it a limit if you do this"""
 
 def event_list(stim_num):
-    return [Event(fixation, start=0, duration=2.0),
+    return [Event(random.choice(fixation), start=0, duration=2.0),
             Event(trial_stims[stim_num], start=2, duration=.5,
                   log={'stim.num': stim_num},
                   # Need some way for the Response to dynamically log the
