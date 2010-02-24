@@ -38,6 +38,8 @@ xlim, ylim = vision_egg.screen.size # screen size in pixels
 center = (xlim/2,ylim/2) 
 rest = Text(text="Press space to begin.", position=center, anchor='center',
             on=False)
+
+#First few attempts can be ignored
 def fixation1():
     Text(text=random.choice("GGGGGGGGNN"), font_size=55, position=center, anchor='center', on=False);
 fixation2 = Text(text=random.choice("GGGGGGGGNN"), font_size=55, position=center, anchor='center', 
