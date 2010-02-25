@@ -39,16 +39,11 @@ center = (xlim/2,ylim/2)
 rest = Text(text="Press space to begin.", position=center, anchor='center',
             on=False)
 
-#First few attempts can be ignored
-def fixation1():
-    Text(text=random.choice("GGGGGGGGNN"), font_size=55, position=center, anchor='center', on=False);
-fixation2 = Text(text=random.choice("GGGGGGGGNN"), font_size=55, position=center, anchor='center', 
-                on=False)
 				
-cues = ['G','G','G','G','G','G','G','G','N','N']
-fixation = [Text(text=cue, font_size=55, position=center, anchor='center', 
-                on=False)
-				for cue in cues]
+cues = ['G','N']
+fixation = dict((cue, Text(text=cue, font_size=55, position=center, anchor='center', 
+                           on=False))
+				for cue in cues)
 
 
 # Note, prior to python3, need a float to avoid integer division
@@ -60,7 +55,7 @@ trial_stims = [FilledCircle(radius=10.0, position=(xpos, ylim/2), on=False)
 # the pygame keypress which you want to begin the trials
 # Setting the trigger here seems a little out of place... something to clean up
 # at a later date
-vision_egg.set_stimuli([rest,fixation]+trial_stims, trigger=K_SPACE)
+vision_egg.set_stimuli([rest]+fixation.values()+trial_stims, trigger=K_SPACE)
 
 #############
 # Structure #
@@ -77,10 +72,10 @@ response - a Response instance
             this gives back the integer 2^x, x indexes the finger
             dont give it a limit if you do this"""
 
-def event_list(stim_num):
-    return [Event(random.choice(fixation), start=0, duration=2.0),
+def event_list(stim_num, fix_type):
+    return [Event(fixation[fix_type], log={'fix_type': fix_type}, start=0, duration=2.0),
             Event(trial_stims[stim_num], start=2, duration=.5,
-                  log={'stim.num': stim_num},
+                  log={'stim_num': stim_num},
                   # Need some way for the Response to dynamically log the
                   # x.position and update it
                   response=Response(label='press',limit=('z','/')) ),
@@ -88,9 +83,13 @@ def event_list(stim_num):
 
 # Trials are initialized with an "events" arg which is a list of Event instances
 # trial_stims * 4 gives us 20 Trials
-trials = [Trial(event_list(stim_num)) 
-            for stim_num in range(len(trial_stims)) * 4]
-random.shuffle(trials)
+stim_order = range(len(trial_stims)) * 4
+random.shuffle(stim_order)
+fix_order = fixation.keys() * 10
+random.shuffle(fix_order)
+trials = [Trial(event_list(stim_num, fix_type))
+            for stim_num, fix_type in zip(stim_order, fix_order)]
+
 
 # pause_event begins each block after a SPACE press.
 # 'rest' is the name of my text stim
