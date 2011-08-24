@@ -9,7 +9,7 @@ adaptive logic would be out of place here.
 Now that things have been made a little more general, you could do adaptive
 stuff... but its not obvious."""
 
-from datetime import date
+from datetime import datetime
 import time
 from copy import copy
 from csv import DictWriter
@@ -425,7 +425,7 @@ class StimController:
         # writes a .datalog file that holds subject and testing date for each block
         # This is altered slightly from john's simpleComplex_OneGo.py  -geoff
 
-        sub_date = '%s: %s\n'%(subjectName,str(date.fromtimestamp(time.time())))
+        sub_date = '%s: %s\n'%(subjectName,str(datetime.fromtimestamp(time.time())))
         try:
             datalog = open(experimentname + '.datalog','r')
             dataloglines = datalog.readlines()

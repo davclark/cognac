@@ -11,32 +11,14 @@ from VisionEgg.ParameterTypes import NoneType
 import sys
 import pygame
 
-# I think this will only work using python 2.6
-if not sys.version.startswith('2.6'):
-    raise Exception('This will only work with python 2.6.\n\nCall with "python2.6 <script-name>.py" at the terminal.\n')
-
 #################################
 # Set some VisionEgg Defaults:  #
 #################################
-
 # Turning the GUI completely off keeps this from crashing on SnowLeopard
 VisionEgg.config.VISIONEGG_GUI_INIT = 0
 VisionEgg.config.VISIONEGG_GUI_ON_ERROR = 0
+VisionEgg.config.VISIONEGG_FULLSCREEN = 1 
 
-# comment this block out if you don't want to use full-screen.
-screen = pygame.display.set_mode((0,0))
-WIDTH, HEIGHT = screen.get_size()
-pygame.quit()
-VisionEgg.config.VISIONEGG_SCREEN_W = WIDTH
-VisionEgg.config.VISIONEGG_SCREEN_H = HEIGHT
-VisionEgg.config.VISIONEGG_FULLSCREEN = 1
-
-# I put these into SimpleVisionEgg.__init__
-#VisionEgg.start_default_logging()
-#VisionEgg.watch_exceptions()
-
-
-## Now for our code
 class MultiStimHelper:
     """Meant to be embedded in MultiStim"""
     stims = None
@@ -51,7 +33,6 @@ class MultiStimHelper:
 
     def __getattr__(self, name):
         return [getattr(s.parameters, name) for s in self.stims]
-
 
 class MultiStim:
     """Very simple surrogate class to get or set values of multiple classes at
@@ -83,6 +64,13 @@ class SimpleVisionEgg:
         # used to be outside of any methods...
         VisionEgg.start_default_logging()
         VisionEgg.watch_exceptions()
+        # get screen size for setting fullscreen resolution
+        # comment this block out if you don't want to use full-screen.
+        screen = pygame.display.set_mode((0,0))
+        WIDTH, HEIGHT = screen.get_size()
+        pygame.quit()
+        VisionEgg.config.VISIONEGG_SCREEN_W = WIDTH
+        VisionEgg.config.VISIONEGG_SCREEN_H = HEIGHT
 
         self.screen = get_default_screen()
         self.keys = []
