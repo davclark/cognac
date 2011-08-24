@@ -1,0 +1,3 @@
+These functions provide a wrapper around Vision Egg functions to allow for quick and simple experimentation. See SVE_template.py for an example of how these are run.
+
+Mostly Dav Clark (davclark@berkeley.edu) programmed this back before 2009. Geoff Brookshire (g_b@cal.berkeley.edu) added some to it later, including the SVE_template.
