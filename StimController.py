@@ -6,7 +6,7 @@ log the timings and keyboard responses to them.  Adaptive experiments should
 simply instantiate a new StimulusController for each trial, for example -
 adaptive logic would be out of place here.
 
-Now that things have been made a little more general, you could do adaptive
+Now that things have been made a little more general, you can do adaptive
 stuff... but its not obvious."""
 
 
@@ -16,7 +16,6 @@ import time
 from copy import copy
 from csv import DictWriter
 
-from SimpleVisionEgg import SimpleVisionEgg
 import pygame
 
 
@@ -49,16 +48,11 @@ class RelTime:
         return retval
 
 
-class Response:
+class Response(object):
     '''A generic response class that maintains information about key-presses. 
     
     Can be overridden to handle more complex hardware.
-    which take args: 
-        label (how the response is named in the csv)
-        limit -- if you give it key values (e.g. ("l","m") accepts only those)
-        buttonbox -- a parallel.respbox.RespBox instance
-            this gives back the integer 2^x, x indexes the finger
-            dont give it a limit if you do this'''
+    '''
     ## These are things you can set to affect the Response behavior
 
     # The name of the response for relative timing
@@ -77,52 +71,63 @@ class Response:
     response = None
     rt = None
 
-    ## Not sure if these should be in the base class!
-    buttonbox = None
+    # Should maybe shift to derived class
     timelimit = None
 
-    # You could potentially change this, but that would be an "advanced"
-    # maneuver
-    unlogged = ('limit', 'label', 'response_type', 'buttonbox')
+    # You can change this, but that would be an "advanced" maneuver. Do
+    # something like:
+    # unlogged = Response.unlogged + ('my_secret_stuff')
+    unlogged = ('limit', 'label', 'response_type', 'timelimit')
 
-    def __init__(self, label, expected=None, limit=None, buttonbox=None):
+    def __init__(self, label, expected=None, limit=None, timelimit=None):
         '''We're careful here so that our __dict__ will have only entries we've
         actually updated
-        buttonbox is an instance of parallel.respbox.Respbox()
-        timelimit is the trial length, and stops the buttonbox loop. only needed 
-        if buttonboxes are used.'''
+
+        label : str
+            how the response is named in the csv
+        limit : container
+            if you give it key values, e.g., ("l","m"), accepts only those
+        timelimit : numeric
+            is measured from time of response registration, and aborts the
+            response.
+        '''
         self.label = label
         if expected is not None:
             self.expected = expected
         if limit is not None:
             self.limit = limit
-        if buttonbox is not None:
-            self.buttonbox = buttonbox
+        if timelimit is not None:
+            self.timelimit = timelimit
 
     def record_response(self, t):
-        '''This could be overridden to do extended feedback, like data entry
+        '''The function that's called each time through the event loop
+        
+        t : float 
+            The relative time from beginning of the Trial that's passed in
+            by the StimController event loop
+        
+        This could be overridden to do extended feedback, like data entry
         or updating feedback during response collection'''
-        if self.buttonbox:
-            resp = self.buttonbox.readBox()
-            if resp>0:
-                self.response = resp
+        
+        responses = pygame.event.get(self.response_type)
+        # We're keeping our event queue tidy - which might be bad depending on
+        # your experiment! Subclass if necessary
+        pygame.event.clear()
+
+        for r in responses:
+            r_name = pygame.key.name(r.key)
+            # Just grab the first thing we get if self.limit is not defined
+            if self.limit is None or r_name in self.limit:
+                self.response = r_name
                 self.rt = t - self.ref_time
                 return True
-                
-            return False
 
-        else:
-            responses = pygame.event.get(self.response_type)
-            pygame.event.clear()
-            if responses:
-                # If you want something more sophisticated - write a subclass!
-                first_response = pygame.key.name(responses[0].key)
-                if not self.limit or first_response in self.limit:
-                    self.response = first_response
-                    self.rt = t - self.ref_time
-                    return True
+        if self.timelimit is not None and \
+                t - self.ref_time >= self.timelimit:
+            self.rt = t - self.ref_time
+            return True
 
-            return False
+        return False
 
     def response_time(self):
         '''This is trivial, but might not be with other response types'''
@@ -210,17 +215,22 @@ class Trial:
     active_events = None
     # The actual log of responses and stuff
     log = None
-
+    unlogged = False
+    
     @classmethod
     def from_yaml(cls, yaml_events, event_dict=None):
         return cls([Event.from_yaml(y, event_dict) for y in yaml_events])
 
-    def __init__(self, events):
-        '''For now this initializes from a yaml representation.  Ultimately, we
-        want to avoid this. Note that this doesn't require the yaml parser -
-        just it's output or something equivalent.
+    def __init__(self, events, unlogged=None):
+        '''We generally initialize from a yaml representation.  Note that this
+        doesn't require the yaml parser - just it's output or something
+        equivalent.
         
-        events should be a list of 'Event's'''
+        events :
+            a list of `Event`s
+        '''
+        if unlogged is not None:
+            self.unlogged = unlogged
         self.events = events
         self.active_events = []
         self.log = {}    
@@ -229,7 +239,7 @@ class Trial:
         try:
             ref_time = self.log[event_time.ref]
         except KeyError:
-            # The event hasn't even been registered yet!
+            # The ref event hasn't even been registered yet!
             return False
 
         try:
@@ -396,6 +406,8 @@ class StimController:
         log = []
         header = set()
         for t in self.trials:
+            if t.unlogged:
+                continue
             log_line = conv_log(t.log.items())
             log.append(log_line) 
             header.update(log_line)
