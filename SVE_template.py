@@ -9,7 +9,11 @@ See trunk/geoff/hemifield_faces/hemifield_faces.py for a real example.
 
 # You need to import these in addition to whatever else you do
 from cognac.StimController import Response, Event, Trial, StimController
-from cognac.SimpleVisionEgg import *
+from cognac.SimpleVisionEgg import VisionEgg, SimpleVisionEgg
+import sys
+# add the cognac simple vision egg functions to the path
+sys.path.append('/Users/Daniel_Casasanto/Documents/SimpleVisionEgg/SimpleVisionEgg')
+
 # If using a buttonbox:
 #from parallel import respbox
 
@@ -17,10 +21,13 @@ from pygame import K_SPACE
 import random
 from VisionEgg.Text import Text
 
+print "Height:", VisionEgg.config.VISIONEGG_SCREEN_H
+print "Width:", VisionEgg.config.VISIONEGG_SCREEN_W
+
 class FaceStim(Text):
     """Stimulus object -- accepts string of a dumb emoticon"""
     def __init__(self,face):
-        self.face=face 
+        self.face = face 
         
         Text.__init__(self, text=face, font_size=50,
              color=[random.random() for i in (1,2,3)],

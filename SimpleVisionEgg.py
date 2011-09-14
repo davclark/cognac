@@ -2,6 +2,8 @@
 do.  This module serves simply to set things up and keep track of VisionEgg
 related values.  It shouldn't really _do_ anything."""
 
+import pygame
+
 import VisionEgg
 from VisionEgg.Core import get_default_screen, Viewport
 from VisionEgg.FlowControl import Presentation, FunctionController
@@ -9,20 +11,15 @@ from VisionEgg.ResponseControl import KeyboardResponseController
 from VisionEgg.DaqKeyboard import KeyboardTriggerInController
 from VisionEgg.ParameterTypes import NoneType
 
+
 #################################
 # Set some VisionEgg Defaults:  #
 #################################
+# Turning the GUI completely off keeps this from crashing on SnowLeopard
+VisionEgg.config.VISIONEGG_GUI_INIT = 0
+VisionEgg.config.VISIONEGG_GUI_ON_ERROR = 0
+VisionEgg.config.VISIONEGG_FULLSCREEN = 1 
 
-VisionEgg.start_default_logging()
-VisionEgg.watch_exceptions()
-
-# Could set constraints here if you don't want to muck with config files
-# VisionEgg.config.VISIONEGG_SCREEN_W = 1026
-# VisionEgg.config.VISIONEGG_SCREEN_H = 768
-# VisionEgg.config.VISIONEGG_FULLSCREEN = 1
-
-
-## Now for our code
 class MultiStimHelper:
     """Meant to be embedded in MultiStim"""
     stims = None
@@ -37,7 +34,6 @@ class MultiStimHelper:
 
     def __getattr__(self, name):
         return [getattr(s.parameters, name) for s in self.stims]
-
 
 class MultiStim:
     """Very simple surrogate class to get or set values of multiple classes at
@@ -64,6 +60,19 @@ class SimpleVisionEgg:
         """We break up initialization a bit as we need to go back and forth with
         some information.  In this case, we need screen size before specifying
         the stimuli"""
+        
+        # pasted in from where it used to be at the beginning of the script
+        # used to be outside of any methods...
+        VisionEgg.start_default_logging()
+        VisionEgg.watch_exceptions()
+        # get screen size for setting fullscreen resolution
+        # comment this block out if you don't want to use full-screen.
+        screen = pygame.display.set_mode((0,0))
+        WIDTH, HEIGHT = screen.get_size()
+        pygame.quit()
+        VisionEgg.config.VISIONEGG_SCREEN_W = WIDTH
+        VisionEgg.config.VISIONEGG_SCREEN_H = HEIGHT
+
         self.screen = get_default_screen()
         self.keys = []
         self.presses = []

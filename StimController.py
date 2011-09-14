@@ -9,9 +9,7 @@ adaptive logic would be out of place here.
 Now that things have been made a little more general, you can do adaptive
 stuff... but its not obvious."""
 
-
-
-from datetime import date
+from datetime import datetime
 import time
 from copy import copy
 from csv import DictWriter
@@ -129,6 +127,7 @@ class Response(object):
 
         return False
 
+
     def response_time(self):
         '''This is trivial, but might not be with other response types'''
         try:
@@ -146,7 +145,12 @@ class Event:
     response - a Response instance
     """
     '''A thin wrapper around VisionEgg stimuli.  Most of the code is now for
-    backwards compatibility'''
+    backwards compatibility
+
+    Attempt to make an event that ends upon getting a response.
+    If on_keypress and (stop or duration) are given, on_keypress stops
+    the event until the time specified, at which point it stops regardless.
+    '''
 
     # Usually a VisionEgg stimulus
     target = None
@@ -159,6 +163,7 @@ class Event:
     log = None
     # Responses to get
     response = None
+    on_keypress = None
 
     @classmethod
     def from_yaml(cls, yaml_event, target_dict=None):
@@ -182,8 +187,8 @@ class Event:
 
         return cls(target, **parms)
 
-    def __init__(self, target, start, stop=None, duration=None,
-                 log=None, response=None, **parms):
+    def __init__(self, target, start, stop=None, duration=None, log=None, 
+                 response=None, on_keypress=False, **parms):
         '''Currently doesn't check to see that stop or duration is specified.
         This leads to an error in RelTime.'''
         self.target = target
@@ -197,6 +202,11 @@ class Event:
         self.parms = parms
         self.log = log
         self.response = response
+        self.on_keypress = on_keypress
+
+        if (not response) and on_keypress:
+            msg = "on_keypress can only be set to TRUE if a response is allowed."
+            raise Exception(msg)
         
     def activate(self):
         if self.target is not None:
@@ -222,9 +232,9 @@ class Trial:
         return cls([Event.from_yaml(y, event_dict) for y in yaml_events])
 
     def __init__(self, events, unlogged=None):
-        '''We generally initialize from a yaml representation.  Note that this
-        doesn't require the yaml parser - just it's output or something
-        equivalent.
+        '''We no longer generally initialize from a yaml representation.  Note
+        that this doesn't require the yaml parser - just it's output or
+        something equivalent.
         
         events :
             a list of `Event`s
@@ -273,6 +283,7 @@ class Trial:
                     event.response.ref_time = t
                     self.log[event.response.label] = event.response
                     self.curr_response = event.response
+
             else:
                 break
 
@@ -287,6 +298,18 @@ class Trial:
             if self.event_ready(event.stop, t):
                 event.deactivate()
                 self.active_events.remove(event)
+            # my addition to allow for keypress-responsive events follows
+            # 'try' is more pythonic (and faster) than checking for attribute
+            # existence -DJC
+            try:
+                if event.on_keypress and event.response.response:
+                    event.deactivate()
+                    # not sure if the event needs to be removed
+                    # from the list of active events.
+                    self.active_events.remove(event)
+            except AttributeError:
+                pass
+
 
     def done(self):
         return not (self.events or self.active_events)
@@ -432,7 +455,7 @@ class StimController:
         # writes a .datalog file that holds subject and testing date for each block
         # This is altered slightly from john's simpleComplex_OneGo.py  -geoff
 
-        sub_date = '%s: %s\n'%(subjectName,str(date.fromtimestamp(time.time())))
+        sub_date = '%s: %s\n'%(subjectName,str(datetime.fromtimestamp(time.time())))
         try:
             datalog = open(experimentname + '.datalog','r')
             dataloglines = datalog.readlines()
