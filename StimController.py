@@ -464,7 +464,7 @@ class StimController:
             dataloglines = []
 
         outputFileName = '%s_%d.csv' % \
-                (subjectName, 1 + ''.join(dataloglines).count(subjectName))
+            (subjectName, 1 + ''.join(dataloglines).count(subjectName + ':'))
         datalog = open(experimentname + '.datalog', 'a')
         datalog.write(sub_date)
         datalog.close()
