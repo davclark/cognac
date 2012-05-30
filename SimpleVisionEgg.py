@@ -35,6 +35,7 @@ class MultiStimHelper:
     def __getattr__(self, name):
         return [getattr(s.parameters, name) for s in self.stims]
 
+
 class MultiStim:
     """Very simple surrogate class to get or set values of multiple classes at
     once."""
@@ -61,8 +62,6 @@ class SimpleVisionEgg:
         some information.  In this case, we need screen size before specifying
         the stimuli"""
         
-        # pasted in from where it used to be at the beginning of the script
-        # used to be outside of any methods...
         VisionEgg.start_default_logging()
         VisionEgg.watch_exceptions()
         # get screen size for setting fullscreen resolution
@@ -113,6 +112,14 @@ class SimpleVisionEgg:
 
     def pause(self):
         self.presentation.parameters.go_duration = (0, 'frames')
+
+    def quit(self):
+        # Note - despite what you might expect from the documentation, the
+        # following doesn't work (as of release-1.2.1)
+        # self.presentation.parameters.quit = True
+
+        # This does work, via the main while loop in Presentation.go()
+        self.presentation.set(go_duration=(-1, 'seconds'))
 
     def get_new_response(self, t, min_interval=2.0 / 60, releases=False):
         """(key, press) = get_new_response(self, t, min_interval=2.0 / 60)
@@ -194,9 +201,9 @@ class SimpleVisionEgg:
         function evaluates that.
         """
 
-        ''' 
-        If we're using the FORP, this isn't necessary, as events have no duration; 
-        they are represented as instantaneous keypresses.
+        '''
+        If we're using the FORP, this isn't necessary, as events have no
+        duration; they are represented as instantaneous keypresses.
 
         -- John
         '''
