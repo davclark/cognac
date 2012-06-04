@@ -66,9 +66,9 @@ class SimpleVisionEgg:
         VisionEgg.watch_exceptions()
         # get screen size for setting fullscreen resolution
         # comment this block out if you don't want to use full-screen.
-        screen = pygame.display.set_mode((0,0))
+        screen = pygame.display.set_mode((0,0)) # this opens up a pygame window
         WIDTH, HEIGHT = screen.get_size()
-        pygame.quit()
+        pygame.quit()  # close this pygame window, or else it interferes w/ VE
         VisionEgg.config.VISIONEGG_SCREEN_W = WIDTH
         VisionEgg.config.VISIONEGG_SCREEN_H = HEIGHT
 
