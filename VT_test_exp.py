@@ -28,7 +28,7 @@ I've found that values ~800-1024 optimally balance RT sampling rate w/ dropped f
 import sys
 from cognac.StimController import Response, Event, Trial, StimController
 from cognac.SimpleVisionEgg import *
-import VoiceTrigger
+from cognac.VoiceTrigger import VoiceResponse, VoiceTriggerController
 
 from pygame import K_SPACE
 import random
@@ -46,7 +46,9 @@ class PicStim(TextureStimulus):
         self.type = 'picture'
 
         TextureStimulus.__init__(self,
-            texture = texture, size = (300, 400), **std_params)
+                                 texture = texture,
+                                 size = (300, 400),
+                                 **std_params)
 
 class TextStim(Text):
     """Stimulus object -- accepts string of a dumb emoticon"""
@@ -71,7 +73,7 @@ class CircleStim(FilledCircle):
 class ExpTrial(Trial):
     """Here's a trial for this experiment, which you give a FaceStim instance"""
     def __init__(self, stim):
-        voice_resp = VoiceTrigger.VoiceResponse(label = 'speak',
+        voice_resp = VoiceResponse(label = 'speak',
                         audio_controller = voice_controller)
 
         events=[Event(fixation, start=0, duration=2.0),
@@ -96,8 +98,9 @@ while exp_type not in ['p', 'c', 't', 'all']:
 # Initialize #
 ##############
 # Initialize the Controller first
-voice_controller = VoiceTrigger.VoiceTriggerController()
-voice_controller.set_threshold_gui() # dynamically set the trigger threshold
+voice_controller = VoiceTriggerController(threshold = 1000, chunk_size = 800)
+# dynamically set the trigger threshold
+voice_controller.set_threshold_gui(display_scale = 1/20.)
 
 # Then initialize vision egg
 vision_egg = SimpleVisionEgg()

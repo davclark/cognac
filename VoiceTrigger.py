@@ -95,26 +95,29 @@ class VoiceTriggerController(Flow.Controller):
     and the VisionEgg.log file. 
     '''
 
-    THRESHOLD = 1000
-    CHUNK_SIZE = 800
-    RATE = 44100
     FORMAT = pyaudio.paInt16
-    recording = False
 
-
-    def __init__(self, rec_duration = 2): 
-        pa = pyaudio.PyAudio()  # initialize pyaudio and open an audio stream
-        self.stream = pa.open(format = self.FORMAT, channels = 1,
-                              rate = self.RATE,
-                              input = True, output = False,
-                              frames_per_buffer = self.CHUNK_SIZE) 
+    def __init__(self, rec_duration=2,
+                 threshold=1000,
+                 chunk_size=800,
+                 rate=44100): 
 
         # initialize a few important variables
+        self.THRESHOLD = threshold  # amplitude that triggers a pygame event
+        self.CHUNK_SIZE = chunk_size  # no. of samples to read from stream
+        self.RATE = rate  # sampling rate of the audio stream
         self.rec_duration = rec_duration  # how long to record for
         self.rec_onset_time = None # time the present recording began
         self.rec_array = array('h')  # holds the temporary audio data
-        self.sample_width = pa.get_sample_size(self.FORMAT) 
         self.soundfile_path = 0  # number is converted to a string for filenames
+        self.recording = False  # is it recording the stream to disk
+
+        pa = pyaudio.PyAudio()  # initialize pyaudio and open an audio stream
+        self.sample_width = pa.get_sample_size(self.FORMAT) 
+        self.stream = pa.open(format=self.FORMAT, channels=1,
+                              rate=self.RATE,
+                              input=True, output=False,
+                              frames_per_buffer = self.CHUNK_SIZE) 
 
         Flow.Controller.__init__(self,
             return_type = ve_types.get_type(None),
@@ -122,11 +125,15 @@ class VoiceTriggerController(Flow.Controller):
             temporal_variables = Flow.Controller.TIME_SEC_SINCE_GO)
 
 
-    def set_threshold_gui(self):
+    def set_threshold_gui(self, display_scale=0.03):
         """ Open up a pygame gui to set the threshold for the voice trigger. 
         The line turns red if a pygame event is detected, i.e. if the threshold
         is exceeded. Use the left and right arrows to avoid having this happen. 
         Quits pygame when finished to avoid interfering with VisionEgg.
+
+        display_scale determines how much space is devoted to amplitude (smaller
+        numbers mean that ambient noise fills up less of the scale)
+
         """ 
         from numpy import mean
 
@@ -146,7 +153,6 @@ class VoiceTriggerController(Flow.Controller):
 
         old_chunk_size = self.CHUNK_SIZE  # read larger chunks for this.
         self.CHUNK_SIZE = 2048
-        display_scale = 1/30. # how to display the mic input on the screen
 
         threshold_color = [250, 250, 250]  # color of the line marking threshold
 
@@ -196,7 +202,7 @@ class VoiceTriggerController(Flow.Controller):
                     threshold_color[i] = val + 5
 
             # draw everything to the screen
-            screen.fill((0,0,0))
+            screen.fill((0, 0, 0))
             pygame.draw.line(screen, threshold_color,
                              (self.THRESHOLD * display_scale, screen_center[1] - 100),
                              (self.THRESHOLD * display_scale, screen_center[1] + 100),
@@ -205,7 +211,7 @@ class VoiceTriggerController(Flow.Controller):
             pygame.display.flip() 
 
         pygame.quit()  # quit this pygame session when the loop ends
-        self.CHUNK_SIZE = old_chunk_size # reset the chunk size for pygame
+        self.CHUNK_SIZE = old_chunk_size # reset the chunk size for pyaudio
 
 
     def record_soundfile(self, sound_chunk):
