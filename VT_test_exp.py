@@ -28,11 +28,7 @@ I've found that values ~800-1024 optimally balance RT sampling rate w/ dropped f
 import sys
 from cognac.StimController import Response, Event, Trial, StimController
 from cognac.SimpleVisionEgg import *
-<<<<<<< HEAD
 from cognac.VoiceTrigger import VoiceResponse, VoiceTriggerController
-=======
-import cognac.VoiceTrigger as VoiceTrigger
->>>>>>> fixed faulty VoiceTrigger import in VT_test_exp.py
 
 from pygame import K_SPACE
 import random
