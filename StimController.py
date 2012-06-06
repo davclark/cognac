@@ -345,7 +345,12 @@ class StimController:
                                       pause_update=self.pause_update)
 
     def run_trials(self, num=0):
-        self.trials_to_run = num
+        """ starting with the 'num' arg equal to "all" runs all the trials.
+        """
+        if num == 'all':
+            self.trials_to_run = len(self.trials)
+        else:
+            self.trials_to_run = num
         self.vision_egg.go()
 
     def compute_go_duration(self, units='seconds'):
