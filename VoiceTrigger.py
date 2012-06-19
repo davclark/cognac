@@ -266,6 +266,8 @@ class VoiceTriggerController(Flow.Controller):
             wf.writeframes(s_data)
             wf.close() 
 
+        self.sounds_to_save = {} # clear the sound data after saving
+
 
     def read_stream(self):
         """ Read the audio stream, check for voice triggers, handle any errors.
