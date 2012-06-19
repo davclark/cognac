@@ -3,7 +3,8 @@ Classes to register voice-trigger RTs and save wave-files of those resps.
 
 To be sure that your stim timing goes smoothly, ALWAYS try to save your sound
 file at a time when nothing else is happening by specifying its duration to not
-overlap with other important events.
+overlap with other important events. Save sounds from your experiment script using
+voice_controller.write_soundfiles(). See VT_test_exp.py for an example.
 
 You sometimes see a few lines of the "[Errno Input overflowed] -9981" upon startup,
 but it doesn't seem to affect anything. Fiddle with CHUNK_SIZE to change these --
@@ -93,6 +94,11 @@ class VoiceTriggerController(Flow.Controller):
     to increase over your screen refresh time (usually 16.7 ms). Check this with
     the report that VisionEgg gives when it quits (the histogram at terminal)
     and the VisionEgg.log file. 
+
+    Sound files must be saved using voice_controller_instance.write_soundfiles()
+    called from your experiment script! Do this at a time when saving files won't
+    interfere with the timing of the stims/responses.
+
     '''
 
     FORMAT = pyaudio.paInt16
@@ -111,6 +117,7 @@ class VoiceTriggerController(Flow.Controller):
         self.rec_array = array('h')  # holds the temporary audio data
         self.soundfile_path = 0  # number is converted to a string for filenames
         self.recording = False  # is it recording the stream to disk
+        self.sounds_to_save = {} # dict - holds filenames and sounds to save
 
         pa = pyaudio.PyAudio()  # initialize pyaudio and open an audio stream
         self.sample_width = pa.get_sample_size(self.FORMAT) 
@@ -203,9 +210,10 @@ class VoiceTriggerController(Flow.Controller):
 
             # draw everything to the screen
             screen.fill((0, 0, 0))
+            xpos = self.THRESHOLD * display_scale
             pygame.draw.line(screen, threshold_color,
-                             (self.THRESHOLD * display_scale, screen_center[1] - 100),
-                             (self.THRESHOLD * display_scale, screen_center[1] + 100),
+                             (xpos, screen_center[1] - 100),
+                             (xpos, screen_center[1] + 100),
                              5) 
             pygame.draw.line(screen, (0, 250, 0), mean_vol, max_vol, 5) 
             pygame.display.flip() 
@@ -213,11 +221,20 @@ class VoiceTriggerController(Flow.Controller):
         pygame.quit()  # quit this pygame session when the loop ends
         self.CHUNK_SIZE = old_chunk_size # reset the chunk size for pyaudio
 
-
-    def record_soundfile(self, sound_chunk):
+    def record_sound(self, sound_chunk): 
         ''' Add data to the temporary sound array while recording.
-        When the recording time is finished, close and save the sound as a .wav.
+        When the recording time is finished, close and store the
+        sound data in a dict of all the sound data along with the
+        filename which it will be saved with.
+
+        It disrupts timing to save files to disk during the exp.
+        Instead, save the sounds in RAM until a point when they
+        can be saved without jeopardizing timing. Keep a list of the
+        sound chunks to be saved, and write them to disk
+        with voice_controller_instance.write_soundfiles().
+
         '''
+
         self.rec_array.extend(sound_chunk)  # add present chunk to the sound array
 
         # if the time is up, close the object and save the file
@@ -228,18 +245,26 @@ class VoiceTriggerController(Flow.Controller):
             self.rec_onset_time = None
 
             # close the recording, save it
-            sound_data = pack('<' + ('h'*len(self.rec_array)), *self.rec_array)
+            sound_data = pack('<' + ('h' * len(self.rec_array)), *self.rec_array)
 
-            wf = wave.open(str(self.soundfile_path) + '.wav', 'wb')
-            wf.setnchannels(1)
-            wf.setsampwidth(self.sample_width)
-            wf.setframerate(self.RATE)
-            wf.writeframes(sound_data)
-            wf.close()
+            filename = str(self.soundfile_path) + '.wav'
+            self.sounds_to_save[filename] = sound_data
 
             self.rec_array = array('h') # re-initialize the recording array
             self.soundfile_path += 1  # increment soundfile name
             self.stream.start_stream()  # start up the stream again
+
+    def write_soundfiles(self):
+        ''' Save the sound data in self.sounds_to_save to disk.
+
+        '''
+        for fname, s_data in self.sounds_to_save.iteritems():
+            wf = wave.open(fname, 'wb')
+            wf.setnchannels(1)
+            wf.setsampwidth(self.sample_width)
+            wf.setframerate(self.RATE)
+            wf.writeframes(s_data)
+            wf.close() 
 
 
     def read_stream(self):
@@ -277,7 +302,7 @@ class VoiceTriggerController(Flow.Controller):
         pygame.event.clear() 
         stream_data = self.read_stream() 
         if self.recording and stream_data: # record the data
-            self.record_soundfile(stream_data)
+            self.record_sound(stream_data)
 
 
     def between_go_eval(self):
