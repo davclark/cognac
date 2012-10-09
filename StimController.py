@@ -307,7 +307,7 @@ class Trial:
                     # not sure if the event needs to be removed
                     # from the list of active events.
                     self.active_events.remove(event)
-            except AttributeError:
+            except ValueError:
                 pass
 
 
