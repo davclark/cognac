@@ -94,6 +94,8 @@ class Response(object):
             self.expected = expected
         if limit is not None:
             self.limit = limit
+        if type(limit) is str:
+            self.limit = (limit, )
         if timelimit is not None:
             self.timelimit = timelimit
 
